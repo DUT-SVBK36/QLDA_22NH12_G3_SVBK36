@@ -18,8 +18,12 @@ class Theme:
     QUARTERNARY = "#fbf3b9"
     WHITE = "#ffffff"
     BLACK = "#000000"
-    
+    LIGHT_GRAY = "#E5E5E5"
+    LIGHT_PURPLE = "#E0DBFF"
+
     # Font sizes (in pixels, assuming 16px = 1rem)
+    FONT_XS = 12         # 0.75rem
+    FONT_SM = 14         # 0.875rem
     FONT_BASE = 16       # 1rem
     FONT_LG = 22         # 1.375rem
     FONT_XL = 24         # 1.5rem

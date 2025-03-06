@@ -1,125 +1,147 @@
 import tkinter as tk
+import sys
+import os
+
+# Add root directory to path to import modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from _config.theme import Theme
+from components.side_bar import SideBar
+from screens.dashboard import Dashboard
+from utils.gradients import Gradient  # Import for gradient background
+# Import other screens as they are created
+# from screens.monitor import Monitor
+# from screens.settings import Settings
+# from screens.auth import Auth
 
-class App:
-    def __init__(self, root):
-        self.root = root
-        self.setup_window()
-        self.create_widgets()
+class BPDApp(tk.Tk):
+    """
+    Main application controller class
+    
+    Handles:
+    - Window creation
+    - Screen navigation
+    - Authentication state
+    """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         
-        # Track window resizing
-        self.root.bind("<Configure>", self.on_resize)
+        # Configure main window
+        self.title("BPD Application")
+        self.geometry("1200x720")
+        self.minsize(1000, 600)
+        self.config(bg=Theme.WHITE)
         
-        # Store initial size for aspect ratio calculations
-        self.initial_width = self.width
-        self.initial_height = self.height
-
-    def setup_window(self):
-        # Configure the root window
-        self.root.title("BPD Desktop App")
+        # Initialize frames dictionary before creating sidebar
+        self.frames = {}
         
-        # Set 16:9 aspect ratio dimensions
-        self.width = 1280
-        self.height = 720
+        # Setup application container
+        self.setup_container()
         
-        # Center window on screen
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width - self.width) // 2
-        y = (screen_height - self.height) // 2
+        # Initialize screens
+        self.setup_frames()
         
-        # Set initial geometry
-        self.root.geometry(f"{self.width}x{self.height}+{x}+{y}")
+        # Set initial screen
+        self.show_frame("dashboard")
         
-        # Set minimum size
-        self.root.minsize(640, 360)  # Half of 1280x720, maintains 16:9
+        # Bind resize event
+        self.bind("<Configure>", self.on_window_resize)
         
-        # Allow resizing
-        self.root.resizable(True, True)
-
-    def create_widgets(self):
-        # Create a master frame to maintain border and padding
-        self.master_frame = tk.Frame(
-            self.root,
-            bg=Theme.PRIMARY_DARK,  # Border color
-            padx=2,  # Border thickness
-            pady=2   # Border thickness
+        # Apply gradient background after UI is set up
+        self.after(100, self.apply_background_gradient)
+    
+    def apply_background_gradient(self):
+        """Apply a vertical gradient background to the main container"""
+        # Get current dimensions
+        width = self.winfo_width()
+        height = self.winfo_height()
+        
+        # Apply vertical gradient from TERTIARY to QUARTERNARY
+        Gradient.apply_gradient_to_widget(
+            self.main_container,
+            [Theme.TERTIARY, Theme.QUARTERNARY],
+            gradient_type="linear",
+            direction="vertical",
+            width=width,
+            height=height
         )
-        self.master_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Create inner content frame
-        self.content_frame = tk.Frame(self.master_frame, bg=Theme.WHITE)
-        self.content_frame.pack(fill=tk.BOTH, expand=True)
+        # Store the gradient image reference to prevent garbage collection
+        self.bg_gradient = self.main_container.gradient_img
+    
+    def on_window_resize(self, event):
+        """Handle window resize event to update responsive elements"""
+        # Only process resize events for the main window
+        if event.widget == self:
+            # Update the gradient on resize with a slight delay to avoid excessive redraws
+            if hasattr(self, '_resize_timer'):
+                self.after_cancel(self._resize_timer)
+            self._resize_timer = self.after(100, self.apply_background_gradient)
+    
+    def setup_container(self):
+        """Setup the main container and sidebar"""
+        # Main container with weight configuration for responsiveness
+        self.main_container = tk.Frame(self, bg=Theme.WHITE)
+        self.main_container.pack(fill="both", expand=True)
         
-        # Set the background image from theme
-        self.bg_label = Theme.set_app_background(self.content_frame)
+        # Make the main container responsive with grid
+        self.main_container.columnconfigure(1, weight=1)  # Content area grows
+        self.main_container.rowconfigure(0, weight=1)     # Full height
         
-        # Add a welcome message
-        self.welcome_label = tk.Label(
-            self.content_frame,
-            text="16:9 Responsive Window",
-            font=Theme.get_font(Theme.FONT_2XL, "bold"),
-            bg=Theme.PRIMARY,
-            fg=Theme.WHITE,
-            padx=20,
-            pady=10,
-            relief="flat"
-        )
-        self.welcome_label.place(relx=0.5, rely=0.3, anchor="center")
+        # Create sidebar - fixed width
+        self.sidebar = SideBar(self.main_container, controller=self)
+        self.sidebar.grid(row=0, column=0, sticky="ns")
         
-        # Add info text
-        self.info_label = tk.Label(
-            self.content_frame,
-            text="Resize the window while maintaining 16:9 aspect ratio",
-            font=Theme.get_font(Theme.FONT_BASE),
-            bg=Theme.WHITE,
-            fg=Theme.BLACK
-        )
-        self.info_label.place(relx=0.5, rely=0.4, anchor="center")
+        # Create content area - expandable
+        self.content_frame = tk.Frame(self.main_container, bg="")  # Transparent bg
+        self.content_frame.grid(row=0, column=1, sticky="nsew")
         
-        # Add resize indicator
-        self.size_label = tk.Label(
-            self.content_frame,
-            text=f"Window size: {self.width}x{self.height}",
-            font=Theme.get_font(Theme.FONT_BASE),
-            bg=Theme.WHITE,
-            fg=Theme.PRIMARY_DARK
-        )
-        self.size_label.place(relx=0.5, rely=0.5, anchor="center")
-
-    def on_resize(self, event):
-        # Only process if this is the root window
-        if event.widget == self.root:
-            # Get new dimensions
-            new_width = event.width
-            new_height = event.height
-            
-            # Update size label
-            self.size_label.config(text=f"Window size: {new_width}x{new_height}")
-            
-            # Enforce 16:9 aspect ratio if significantly different
-            # (allowing small deviations for window borders)
-            aspect_ratio = new_width / new_height
-            target_ratio = 16 / 9
-            
-            # Only enforce if the difference is significant (>5%)
-            if abs(aspect_ratio - target_ratio) > 0.05:
-                if aspect_ratio > target_ratio:
-                    # Too wide, adjust height
-                    adjusted_height = int(new_width / target_ratio)
-                    self.root.geometry(f"{new_width}x{adjusted_height}")
-                else:
-                    # Too tall, adjust width
-                    adjusted_width = int(new_height * target_ratio)
-                    self.root.geometry(f"{adjusted_width}x{new_height}")
-                
-                # Prevent immediate re-triggering
-                self.root.after(100, lambda: None)
-
-def main():
-    root = tk.Tk()
-    app = App(root)
-    root.mainloop()
+        # Make the content area responsive
+        self.content_frame.columnconfigure(0, weight=1)
+        self.content_frame.rowconfigure(0, weight=1)
+    
+    def setup_frames(self):
+        """Initialize all screen frames"""
+        # Dashboard screen
+        dashboard_frame = Dashboard(self.content_frame)
+        dashboard_frame.controller = self  # Set controller reference for navigation
+        self.frames["dashboard"] = dashboard_frame
+        
+        # Add other screens as they are created
+        # monitor_frame = Monitor(self.content_frame, self)
+        # self.frames["monitor"] = monitor_frame
+        #
+        # settings_frame = Settings(self.content_frame, self)
+        # self.frames["settings"] = settings_frame
+        #
+        # auth_frame = Auth(self.content_frame, self)
+        # self.frames["auth"] = auth_frame
+    
+    def show_frame(self, frame_name):
+        """Show the specified frame and hide others"""
+        print(f"Showing frame: {frame_name}")
+        
+        # Hide all frames
+        for frame in self.frames.values():
+            frame.grid_forget() if hasattr(frame, 'grid_info') else frame.pack_forget()
+        
+        # Show the requested frame
+        if frame_name in self.frames:
+            # Use grid for better responsiveness
+            self.frames[frame_name].grid(row=0, column=0, sticky="nsew")
+            print(f"Frame '{frame_name}' is now visible")
+        else:
+            print(f"Frame '{frame_name}' not found in available frames: {list(self.frames.keys())}")
+    
+    def go_to_monitor(self):
+        """Navigate to the monitor screen"""
+        self.show_frame("monitor")
+    
+    def go_to_settings(self):
+        """Navigate to the settings screen"""
+        self.show_frame("settings")
 
 if __name__ == "__main__":
-    main()
+    app = BPDApp()
+    app.mainloop()
