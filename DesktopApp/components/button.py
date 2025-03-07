@@ -1,5 +1,6 @@
 import tkinter as tk
-from PIL import Image, ImageTk, ImageDraw
+import customtkinter as ctk
+from PIL import Image, ImageTk
 import sys
 import os
 
@@ -7,10 +8,9 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _config.theme import Theme
 
-class ModernButton(tk.Canvas):
+class ModernButton(ctk.CTkButton):
     """
-    A modern-looking button component with rounded corners, hover effects,
-    and customizable appearance based on application theme.
+    A modern-looking button component using customtkinter for better appearance.
     
     Features:
     - Rounded corners with customizable radius
@@ -22,11 +22,11 @@ class ModernButton(tk.Canvas):
     
     # Size presets (width, height, font_size, padding_x, padding_y)
     SIZES = {
-        "xs": (None, 28, Theme.FONT_BASE-4, 12, 4),
-        "sm": (None, 36, Theme.FONT_BASE-2, 16, 6),
-        "md": (None, 44, Theme.FONT_BASE, 20, 8),
-        "lg": (None, 52, Theme.FONT_BASE+2, 24, 10),
-        "xl": (None, 60, Theme.FONT_BASE+4, 28, 12),
+        "xs": (120, 28, Theme.FONT_XS, 12, 4),  # Changed None to fixed width
+        "sm": (120, 36, Theme.FONT_SM, 16, 6),  # Changed None to fixed width
+        "md": (120, 44, Theme.FONT_BASE, 20, 8),  # Changed None to fixed width
+        "lg": (120, 52, Theme.FONT_LG, 24, 10),  # Changed None to fixed width
+        "xl": (120, 60, Theme.FONT_XL, 28, 12),  # Changed None to fixed width
     }
     
     # Color variants
@@ -70,10 +70,11 @@ class ModernButton(tk.Canvas):
             "border_width": 1
         },
         "ghost": {
-            "bg": "",  # Transparent
+            "bg": "transparent",  # Using CTk's transparent option
             "fg": Theme.PRIMARY,
             "hover_bg": "#f8f8ff",  # Very light purple
             "active_bg": "#f0f0ff",  # Light purple
+            "border_color": Theme.WHITE  # Using white instead of transparent for border
         }
     }
     
@@ -100,228 +101,135 @@ class ModernButton(tk.Canvas):
             command: Function to call when button is clicked
             size: Button size ("xs", "sm", "md", "lg", or "xl")
             variant: Button color variant ("primary", "secondary", "tertiary", "quaternary", "dark", "outline", "ghost")
-            icon: Optional PhotoImage to display in the button
+            icon: Optional image to display in the button
             icon_position: Position of the icon ("left" or "right")
             width: Optional custom width (overrides size preset)
             height: Optional custom height (overrides size preset)
             corner_radius: Custom corner radius (defaults to ROUNDED_4)
-            **kwargs: Additional options to pass to the Canvas widget
+            **kwargs: Additional options to pass to the Button widget
         """
-        # Get size configuration
+        # Validate size and variant
         if size not in self.SIZES:
             size = "md"  # Default to medium
         
-        size_config = self.SIZES[size]
-        btn_width = width or size_config[0]
-        btn_height = height or size_config[1]
-        font_size = size_config[2]
-        padding_x = size_config[3]
-        padding_y = size_config[4]
-        
-        # Calculate width if not explicitly provided
-        if not btn_width:
-            # Estimate text width (approximate calculation)
-            text_width = len(text) * (font_size * 0.6)
-            icon_width = 0
-            if icon:
-                # Add space for icon and padding
-                icon_width = btn_height - (2 * padding_y)
-                
-            btn_width = int(text_width + (2 * padding_x) + icon_width + (icon_width > 0) * padding_x)
-        
-        # Set corner radius based on height if not specified
-        self.corner_radius = corner_radius if corner_radius is not None else Theme.ROUNDED_4
-        
-        # Get color configuration
         if variant not in self.VARIANTS:
             variant = "primary"  # Default to primary
-        
+            
+        # Store size and variant for later
+        self.size = size
+        self.variant_name = variant
         self.variant = self.VARIANTS[variant]
-        self.border_width = self.variant.get("border_width", 0)
-        self.border_color = self.variant.get("border_color", "")
+        self.corner_radius = corner_radius if corner_radius is not None else Theme.ROUNDED_4
         
-        # Store properties
-        self.btn_width = btn_width
-        self.btn_height = btn_height
-        self.text = text
-        self.command = command
+        # Get size configuration
+        size_config = self.SIZES[size]
+        self.font_size = size_config[2]
+        
+        # Set dimensions
+        if width is None:
+            width = size_config[0]
+        if height is None:
+            height = size_config[1]
+            
+        # Determine border properties for outline variant
+        border_width = self.variant.get("border_width", 0)
+        border_color = self.variant.get("border_color", None)
+        
+        # Handle transparent background for ghost variant
+        fg_color = self.variant["bg"]
+        if fg_color == "transparent":
+            # Use CTkButton's None value for transparent background
+            fg_color = None
+        
+        # Prepare image and position
         self.icon = icon
         self.icon_position = icon_position
-        self.font = Theme.get_font(font_size)
-        self.state = "normal"
         
-        # Set up canvas with correct dimensions
-        kwargs["highlightthickness"] = 0
-        kwargs["bd"] = 0
-        try:
-            kwargs["bg"] = master["bg"]
-        except (AttributeError, TypeError, tk.TclError):
-            kwargs["bg"] = Theme.WHITE
-        
+        # Initialize customtkinter Button
         super().__init__(
-            master, 
-            width=btn_width,
-            height=btn_height,
+            master,
+            text=text,
+            command=command,
+            fg_color=fg_color,  # Use fg_color variable
+            text_color=self.variant["fg"],
+            hover_color=self.variant["hover_bg"],
+            corner_radius=self.corner_radius,
+            border_width=border_width,
+            border_color=border_color if border_color else self.variant.get("border_color", Theme.WHITE),
+            width=width,
+            height=height,
+            font=(Theme.FONT_FAMILY, self.font_size),
+            image=icon,
+            compound="left" if icon_position == "left" else "right" if icon else None,
             **kwargs
         )
         
-        # Initialize button appearance
-        self.redraw()
+        # Store properties
+        self.text_value = text
         
-        # Bind events
-        self.bind("<Enter>", self.on_enter)
-        self.bind("<Leave>", self.on_leave)
-        self.bind("<ButtonPress-1>", self.on_press)
-        self.bind("<ButtonRelease-1>", self.on_release)
-        
-    def redraw(self):
-        """Redraw the button with current state"""
-        # Clear canvas
-        self.delete("all")
-        
-        # Determine background color based on state
-        if self.state == "hover":
-            bg_color = self.variant["hover_bg"]
-        elif self.state == "active":
-            bg_color = self.variant["active_bg"]
-        else:
-            bg_color = self.variant["bg"]
-        
-        # Draw rounded rectangle
-        if bg_color:  # Only draw if we have a background (ghost buttons may not)
-            # Create rounded rectangle 
-            self.create_rounded_rectangle(
-                0, 0, 
-                self.btn_width, self.btn_height,
-                self.corner_radius, 
-                fill=bg_color,
-                outline=self.border_color if self.border_width > 0 else "",
-                width=self.border_width
-            )
-        
-        # Calculate positions for text and icon
-        if self.icon:
-            # Size the icon to fit within the button height with padding
-            icon_size = self.btn_height - 16  # Adjust as needed
+    def update_size(self, size):
+        """Update the button size"""
+        if size not in self.SIZES:
+            return
             
-            if self.icon_position == "left":
-                icon_x = 10  # Left padding
-                text_x = icon_x + icon_size + 8  # Space between icon and text
-            else:  # right
-                text_x = 10  # Left padding
-                icon_x = self.btn_width - 10 - icon_size  # Right padding
+        if size == self.size:
+            return  # No change needed
             
-            # Draw icon centered vertically
-            icon_y = (self.btn_height - icon_size) // 2
-            self.create_image(icon_x, icon_y, anchor="nw", image=self.icon)
-            
-            # Draw text
-            text_anchor = "w" if self.icon_position == "left" else "e"
-        else:
-            # Center text
-            text_x = self.btn_width // 2
-            text_anchor = "center"
+        # Get new size configuration
+        self.size = size
+        size_config = self.SIZES[size]
+        self.font_size = size_config[2]
         
-        # Draw text
-        if text_anchor == "center":
-            self.create_text(
-                self.btn_width // 2,
-                self.btn_height // 2,
-                text=self.text, 
-                fill=self.variant["fg"],
-                font=self.font,
-                anchor=text_anchor
-            )
-        else:
-            self.create_text(
-                text_x,
-                self.btn_height // 2,
-                text=self.text, 
-                fill=self.variant["fg"],
-                font=self.font,
-                anchor=text_anchor
-            )
-    
-    def on_enter(self, event):
-        """Handle mouse enter event"""
-        self.state = "hover"
-        self.redraw()
+        # Update button properties
+        self.configure(
+            font=(Theme.FONT_FAMILY, self.font_size),
+            height=size_config[1]
+        )
         
-    def on_leave(self, event):
-        """Handle mouse leave event"""
-        self.state = "normal"
-        self.redraw()
-        
-    def on_press(self, event):
-        """Handle mouse press event"""
-        self.state = "active"
-        self.redraw()
-        
-    def on_release(self, event):
-        """Handle mouse release event"""
-        # Check if mouse is still within the button
-        if 0 <= event.x <= self.btn_width and 0 <= event.y <= self.btn_height:
-            if self.command:
-                self.command()
-            self.state = "hover"  # Return to hover state
-        else:
-            self.state = "normal"  # Return to normal state if released outside button
-        self.redraw()
-        
-    def create_rounded_rectangle(self, x1, y1, x2, y2, radius, **kwargs):
-        """Create a rounded rectangle on the canvas"""
-        points = [
-            # Top left
-            x1, y1 + radius,
-            x1, y1,
-            x1 + radius, y1,
-            
-            # Top right
-            x2 - radius, y1,
-            x2, y1,
-            x2, y1 + radius,
-            
-            # Bottom right
-            x2, y2 - radius,
-            x2, y2,
-            x2 - radius, y2,
-            
-            # Bottom left
-            x1 + radius, y2,
-            x1, y2,
-            x1, y2 - radius,
-        ]
-        return self.create_polygon(points, **kwargs, smooth=True)
-    
-    def configure(self, **kwargs):
+    def configure(self, **kw):
         """Update button configuration"""
-        update_needed = False
-        
-        if "text" in kwargs:
-            self.text = kwargs.pop("text")
-            update_needed = True
+        # Handle special configurations
+        if "text" in kw:
+            self.text_value = kw["text"]
             
-        if "command" in kwargs:
-            self.command = kwargs.pop("command")
-            
-        if "icon" in kwargs:
-            self.icon = kwargs.pop("icon")
-            update_needed = True
-            
-        if "state" in kwargs:
-            state = kwargs.pop("state")
-            if state == "disabled":
-                self.state = "disabled"
-                update_needed = True
-            elif state == "normal" and self.state == "disabled":
-                self.state = "normal"
-                update_needed = True
+        if "icon" in kw:
+            self.icon = kw.pop("icon")
+            if self.icon:
+                compound = "left" if self.icon_position == "left" else "right"
+                super().configure(image=self.icon, compound=compound)
+            else:
+                super().configure(image=None, compound=None)
                 
-        if update_needed:
-            self.redraw()
-            
-        # Pass remaining configs to canvas
-        super().configure(**kwargs)
+        if "icon_position" in kw:
+            self.icon_position = kw.pop("icon_position")
+            if self.icon:
+                compound = "left" if self.icon_position == "left" else "right"
+                super().configure(compound=compound)
+                
+        if "variant" in kw:
+            variant = kw.pop("variant")
+            if variant in self.VARIANTS:
+                self.variant_name = variant
+                self.variant = self.VARIANTS[variant]
+                
+                # Handle transparent background
+                if self.variant["bg"] == "transparent":
+                    kw["fg_color"] = None  # None means transparent in CustomTkinter
+                else:
+                    kw["fg_color"] = self.variant["bg"]
+                
+                kw["text_color"] = self.variant["fg"]
+                kw["hover_color"] = self.variant["hover_bg"]
+                
+                # Handle border for outline variant
+                if "border_width" in self.variant:
+                    kw["border_width"] = self.variant["border_width"]
+                    kw["border_color"] = self.variant.get("border_color", Theme.WHITE)
+                else:
+                    kw["border_width"] = 0
+        
+        # Pass remaining configs to CTkButton
+        super().configure(**kw)
     
     def disable(self):
         """Disable the button"""
@@ -330,7 +238,7 @@ class ModernButton(tk.Canvas):
     def enable(self):
         """Enable the button"""
         self.configure(state="normal")
-
+        
 
 class ButtonFactory:
     """Factory class to create different button styles easily"""
@@ -338,34 +246,42 @@ class ButtonFactory:
     @staticmethod
     def create_primary_button(master, text, command=None, size="md", **kwargs):
         """Create a primary button"""
-        return ModernButton(master, text, command, size, "primary", **kwargs)
+        return ModernButton(master, text=text, command=command, size=size, variant="primary", **kwargs)
     
     @staticmethod
     def create_secondary_button(master, text, command=None, size="md", **kwargs):
         """Create a secondary button"""
-        return ModernButton(master, text, command, size, "secondary", **kwargs)
+        return ModernButton(master, text=text, command=command, size=size, variant="secondary", **kwargs)
         
     @staticmethod
     def create_tertiary_button(master, text, command=None, size="md", **kwargs):
         """Create a tertiary button"""
-        return ModernButton(master, text, command, size, "tertiary", **kwargs)
+        return ModernButton(master, text=text, command=command, size=size, variant="tertiary", **kwargs)
         
     @staticmethod
     def create_quaternary_button(master, text, command=None, size="md", **kwargs):
         """Create a quaternary button"""
-        return ModernButton(master, text, command, size, "quaternary", **kwargs)
+        return ModernButton(master, text=text, command=command, size=size, variant="quaternary", **kwargs)
     
     @staticmethod
     def create_dark_button(master, text, command=None, size="md", **kwargs):
         """Create a dark button"""
-        return ModernButton(master, text, command, size, "dark", **kwargs)
+        return ModernButton(master, text=text, command=command, size=size, variant="dark", **kwargs)
     
     @staticmethod
     def create_outline_button(master, text, command=None, size="md", **kwargs):
         """Create an outline button"""
-        return ModernButton(master, text, command, size, "outline", **kwargs)
+        return ModernButton(master, text=text, command=command, size=size, variant="outline", **kwargs)
     
     @staticmethod
     def create_ghost_button(master, text, command=None, size="md", **kwargs):
         """Create a ghost button"""
-        return ModernButton(master, text, command, size, "ghost", **kwargs)
+        return ModernButton(master, text=text, command=command, size=size, variant="ghost", **kwargs)
+
+
+# Function to set CustomTkinter appearance mode
+def initialize_button_styles():
+    """Initialize button appearance mode for the application"""
+    # Set the appearance mode and default color theme
+    ctk.set_appearance_mode("light")  # Options: "light", "dark", "system"
+    ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"

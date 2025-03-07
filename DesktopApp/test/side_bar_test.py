@@ -1,7 +1,8 @@
 import sys
 import os
 import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
+from PIL import Image, ImageTk
 
 # Add root directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,8 +21,6 @@ class TestController:
     
     def create_test_frames(self):
         """Create test frames for each navigation item"""
-        
-        
         frame_configs = {
             "dashboard": {
                 "title": "Dashboard Screen",
@@ -38,54 +37,66 @@ class TestController:
         }
         
         for name, config in frame_configs.items():
-            # Create frame with a temporary background color
-            frame = tk.Frame(self.content_frame, bg=Theme.WHITE)
+            # Create frame with customtkinter
+            frame = ctk.CTkFrame(
+                self.content_frame,
+                fg_color=Theme.WHITE,
+                corner_radius=0
+            )
             frame.pack_propagate(False)
             
             # We need to make the frame visible briefly to get its dimensions
             frame.pack(fill="both", expand=True)
             self.content_frame.update_idletasks()
             
-            # Apply gradient background
-            Gradient.apply_gradient_to_widget(
-                frame,
-                config["gradient_colors"],
-                gradient_type="linear",
-                direction="vertical"
-            )
+            # Get the width and height of the frame
+            width = frame.winfo_width()
+            height = frame.winfo_height()
+            
+            # For customtkinter, we can set the background directly
+            # Apply app background from Theme
+            Theme.set_app_background(frame)
             
             # Hide the frame for now (will be shown when selected)
             frame.pack_forget()
             
-            # Store gradient images to prevent garbage collection
-            frame.gradient_img = frame.gradient_img  # Reference created by apply_gradient_to_widget
-            
             # Add a title - use a frame to make it stand out from the gradient
-            title_frame = tk.Frame(frame, bg=Theme.WHITE, bd=1, relief="solid")
+            title_frame = ctk.CTkFrame(
+                frame,
+                fg_color=Theme.WHITE,
+                corner_radius=0
+            )
             title_frame.pack(pady=(30, 0), padx=20, anchor="nw", fill="x")
             
-            title = tk.Label(
+            # Title label
+            title = ctk.CTkLabel(
                 title_frame, 
                 text=config["title"],
                 font=Theme.get_font(Theme.FONT_2XL, "bold"),
-                bg=Theme.WHITE,
-                fg=Theme.PRIMARY_DARK,
-                pady=10,
-                padx=10
+                text_color=Theme.PRIMARY_DARK,
+                fg_color=Theme.WHITE,
+                padx=10,
+                pady=10
             )
             title.pack(anchor="w")
             
             # Add content with a semi-transparent background
-            content_frame = tk.Frame(frame, bg=Theme.WHITE, bd=0)
+            content_frame = ctk.CTkFrame(
+                frame,
+                fg_color=Theme.WHITE,
+                corner_radius=0
+            )
             content_frame.pack(pady=20, padx=20, anchor="nw", fill="x")
             
-            content = tk.Label(
+            content = ctk.CTkLabel(
                 content_frame,
-                text=f"This is the {name} screen content area with a vertical gradient background.",
+                text=f"This is the {name} screen content area.\n\n" +
+                     "The background is using the app background image from Theme.set_app_background().\n\n" +
+                     "This approach lets us have proper backgrounds while still using customtkinter widgets " +
+                     "for the interface components.",
                 font=Theme.get_font(Theme.FONT_LG),
-                bg=Theme.WHITE,
-                fg=Theme.BLACK,
-                justify="left",
+                text_color=Theme.BLACK,
+                fg_color=Theme.WHITE,
                 wraplength=500,
                 padx=15,
                 pady=15
@@ -136,21 +147,30 @@ class SideBarTester:
     def create_layout(self):
         """Create the test layout"""
         # Main container
-        main_container = tk.Frame(self.root, bg=Theme.WHITE)
+        main_container = ctk.CTkFrame(
+            self.root, 
+            fg_color=Theme.WHITE,
+            corner_radius=0
+        )
         main_container.pack(fill="both", expand=True)
         
         # Left side - Test information
-        info_frame = tk.Frame(main_container, bg=Theme.WHITE, width=300)
+        info_frame = ctk.CTkFrame(
+            main_container, 
+            fg_color=Theme.WHITE, 
+            corner_radius=0,
+            width=300
+        )
         info_frame.pack(side="left", fill="y")
         info_frame.pack_propagate(False)
         
         # Test title
-        title = tk.Label(
+        title = ctk.CTkLabel(
             info_frame, 
             text="SideBar Component Test",
             font=Theme.get_font(Theme.FONT_XL, "bold"),
-            bg=Theme.WHITE,
-            fg=Theme.PRIMARY_DARK
+            text_color=Theme.PRIMARY_DARK,
+            fg_color=Theme.WHITE
         )
         title.pack(pady=(20, 10), padx=20, anchor="w")
         
@@ -168,62 +188,78 @@ class SideBarTester:
         Try clicking the different icons to navigate between screens.
         """
         
-        desc_label = tk.Label(
+        desc_label = ctk.CTkLabel(
             info_frame,
             text=description,
             font=Theme.get_font(Theme.FONT_BASE),
-            bg=Theme.WHITE,
-            fg=Theme.BLACK,
-            justify="left",
-            wraplength=260
+            text_color=Theme.BLACK,
+            fg_color=Theme.WHITE,
+            wraplength=260,
+            justify="left"
         )
         desc_label.pack(pady=10, padx=20, anchor="w")
         
         # Add event log section
-        log_title = tk.Label(
+        log_title = ctk.CTkLabel(
             info_frame,
             text="Event Log:",
             font=Theme.get_font(Theme.FONT_BASE, "bold"),
-            bg=Theme.WHITE,
-            fg=Theme.PRIMARY_DARK
+            text_color=Theme.PRIMARY_DARK,
+            fg_color=Theme.WHITE
         )
         log_title.pack(pady=(20, 5), padx=20, anchor="w")
         
-        # Log text area with scrollbar
-        log_frame = tk.Frame(info_frame, bg=Theme.WHITE)
-        log_frame.pack(pady=5, padx=20, fill="both", expand=True)
-        
-        scrollbar = tk.Scrollbar(log_frame)
-        scrollbar.pack(side="right", fill="y")
-        
-        self.log_text = tk.Text(
-            log_frame,
-            height=10,
-            width=30,
-            wrap="word",
+        # Log text area with scrollbar - using CTkTextbox
+        self.log_text = ctk.CTkTextbox(
+            info_frame,
+            height=200,
+            width=260,
             font=Theme.get_font(12),
-            bg="#f9fafb",
-            fg=Theme.BLACK
+            fg_color="#f9fafb",
+            text_color=Theme.BLACK,
+            wrap="word",
+            activate_scrollbars=True
         )
-        self.log_text.pack(side="left", fill="both", expand=True)
+        self.log_text.pack(pady=5, padx=20, fill="both", expand=True)
         
-        # Connect scrollbar to text
-        scrollbar.config(command=self.log_text.yview)
-        self.log_text.config(yscrollcommand=scrollbar.set)
+        # Add clear log button
+        clear_btn = ctk.CTkButton(
+            info_frame,
+            text="Clear Log",
+            command=lambda: self.log_text.delete("1.0", tk.END),
+            font=Theme.get_font(Theme.FONT_BASE),
+            text_color=Theme.WHITE,
+            fg_color=Theme.PRIMARY,
+            hover_color=Theme.PRIMARY_DARK
+        )
+        clear_btn.pack(pady=(5, 10), padx=20, anchor="e")
         
         # Redirect print statements to the log
         self.setup_print_redirect()
         
-        # Separator
-        separator = ttk.Separator(main_container, orient="vertical")
+        # Separator - CTk doesn't have built-in separators, so create a thin frame
+        separator = ctk.CTkFrame(
+            main_container,
+            width=1,
+            fg_color=Theme.BLACK,
+            corner_radius=0
+        )
         separator.pack(side="left", fill="y")
         
         # Right side - Component test area with dark background for contrast
-        test_frame = tk.Frame(main_container, bg=Theme.PRIMARY_DARK)
+        test_frame = ctk.CTkFrame(
+            main_container, 
+            fg_color=Theme.PRIMARY_DARK,
+            corner_radius=0
+        )
         test_frame.pack(side="left", fill="both", expand=True)
         
-        # Create sidebar
-        self.content_frame = tk.Frame(test_frame, bg=Theme.WHITE)
+        # Create content frame for test controller
+        self.content_frame = ctk.CTkFrame(
+            test_frame, 
+            fg_color=Theme.WHITE,
+            corner_radius=0
+        )
         self.content_frame.pack(side="right", fill="both", expand=True)
         
         # Create test controller to handle navigation
@@ -236,6 +272,10 @@ class SideBarTester:
         
         # Show default screen
         self.controller.show_frame("dashboard")
+        
+        # Log startup information
+        print("SideBar test application started")
+        print("Try clicking on the sidebar icons to navigate between screens")
         
     def setup_print_redirect(self):
         """Redirect print statements to the log text widget"""
@@ -263,7 +303,14 @@ class SideBarTester:
 
 def main():
     try:
-        root = tk.Tk()
+        # Set appearance mode and default color theme
+        ctk.set_appearance_mode("light")
+        ctk.set_default_color_theme("blue")
+        
+        # Initialize customtkinter window
+        root = ctk.CTk()
+        
+        # Create the application
         app = SideBarTester(root)
         
         # Handle window close properly
@@ -273,9 +320,11 @@ def main():
         root.mainloop()
     except Exception as e:
         # If we get here, restore stdout before printing the error
-        if hasattr(app, 'original_stdout'):
+        if 'app' in locals() and hasattr(app, 'original_stdout'):
             sys.stdout = app.original_stdout
         print(f"Error in SideBar test: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":

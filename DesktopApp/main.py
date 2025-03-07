@@ -1,4 +1,4 @@
-import tkinter as tk
+import customtkinter as ctk
 import sys
 import os
 
@@ -8,13 +8,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from _config.theme import Theme
 from components.side_bar import SideBar
 from screens.dashboard import Dashboard
-from utils.gradients import Gradient  # Import for gradient background
 # Import other screens as they are created
 # from screens.monitor import Monitor
 # from screens.settings import Settings
 # from screens.auth import Auth
 
-class BPDApp(tk.Tk):
+class BPDApp(ctk.CTk):
     """
     Main application controller class
     
@@ -25,13 +24,17 @@ class BPDApp(tk.Tk):
     """
     
     def __init__(self, *args, **kwargs):
+        # Set appearance mode before initializing
+        ctk.set_appearance_mode("light")
+        ctk.set_default_color_theme("blue")
+        
         super().__init__(*args, **kwargs)
         
         # Configure main window
         self.title("BPD Application")
-        self.geometry("1200x720")
+        self.geometry("1366x768")
         self.minsize(1000, 600)
-        self.config(bg=Theme.WHITE)
+        self._set_appearance_mode("light")
         
         # Initialize frames dictionary before creating sidebar
         self.frames = {}
@@ -45,44 +48,22 @@ class BPDApp(tk.Tk):
         # Set initial screen
         self.show_frame("dashboard")
         
-        # Bind resize event
-        self.bind("<Configure>", self.on_window_resize)
-        
-        # Apply gradient background after UI is set up
-        self.after(100, self.apply_background_gradient)
+        # Apply background from Theme
+        self.apply_background()
     
-    def apply_background_gradient(self):
-        """Apply a vertical gradient background to the main container"""
-        # Get current dimensions
-        width = self.winfo_width()
-        height = self.winfo_height()
+    def apply_background(self):
+        """Apply the app background from Theme"""
+        # Set the background image to the main container
+        self.bg_label = Theme.set_app_background(self.main_container)
         
-        # Apply vertical gradient from TERTIARY to QUARTERNARY
-        Gradient.apply_gradient_to_widget(
-            self.main_container,
-            [Theme.TERTIARY, Theme.QUARTERNARY],
-            gradient_type="linear",
-            direction="vertical",
-            width=width,
-            height=height
-        )
-        
-        # Store the gradient image reference to prevent garbage collection
-        self.bg_gradient = self.main_container.gradient_img
-    
-    def on_window_resize(self, event):
-        """Handle window resize event to update responsive elements"""
-        # Only process resize events for the main window
-        if event.widget == self:
-            # Update the gradient on resize with a slight delay to avoid excessive redraws
-            if hasattr(self, '_resize_timer'):
-                self.after_cancel(self._resize_timer)
-            self._resize_timer = self.after(100, self.apply_background_gradient)
+        # Ensure the background is behind other widgets
+        if self.bg_label:
+            self.bg_label.lower()
     
     def setup_container(self):
         """Setup the main container and sidebar"""
         # Main container with weight configuration for responsiveness
-        self.main_container = tk.Frame(self, bg=Theme.WHITE)
+        self.main_container = ctk.CTkFrame(self, fg_color=Theme.WHITE, corner_radius=0)
         self.main_container.pack(fill="both", expand=True)
         
         # Make the main container responsive with grid
@@ -94,7 +75,7 @@ class BPDApp(tk.Tk):
         self.sidebar.grid(row=0, column=0, sticky="ns")
         
         # Create content area - expandable
-        self.content_frame = tk.Frame(self.main_container, bg="")  # Transparent bg
+        self.content_frame = ctk.CTkFrame(self.main_container, fg_color="transparent", corner_radius=0)
         self.content_frame.grid(row=0, column=1, sticky="nsew")
         
         # Make the content area responsive

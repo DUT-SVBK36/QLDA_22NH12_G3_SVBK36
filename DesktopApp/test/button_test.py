@@ -1,13 +1,12 @@
 import os
 import sys
-import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
 from PIL import Image, ImageTk, ImageDraw
 
 # Add root directory to path to import modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from components.button import ModernButton, ButtonFactory
+from components.button import ModernButton, ButtonFactory, initialize_button_styles
 from _config.theme import Theme
 
 class ButtonTestApp:
@@ -15,29 +14,17 @@ class ButtonTestApp:
         self.root = root
         self.root.title("Modern Button Test")
         self.root.geometry("900x700")
-        self.root.configure(bg=Theme.WHITE)
+        
+        # Initialize button styles
+        initialize_button_styles()
         
         # Create a main container frame
-        self.container = tk.Frame(root, bg=Theme.WHITE)
+        self.container = ctk.CTkFrame(root, fg_color=Theme.WHITE)
         self.container.pack(fill="both", expand=True)
         
-        # Create canvas with scrollbar for scrolling
-        self.canvas = tk.Canvas(self.container, bg=Theme.WHITE, highlightthickness=0)
-        self.scrollbar = ttk.Scrollbar(self.container, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-        
-        # Pack scrollbar and canvas
-        self.scrollbar.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True)
-        
-        # Create main frame with padding inside the canvas
-        self.main_frame = tk.Frame(self.canvas, bg=Theme.WHITE, padx=30, pady=30)
-        
-        # Create window in the canvas to contain the main frame
-        self.canvas_window = self.canvas.create_window((0, 0), window=self.main_frame, anchor="nw")
-        
-        # Configure canvas to scroll with mousewheel
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        # Create scrollable frame
+        self.scrollable_frame = ctk.CTkScrollableFrame(self.container, fg_color=Theme.WHITE)
+        self.scrollable_frame.pack(fill="both", expand=True, padx=30, pady=30)
         
         # Add header
         self.create_header()
@@ -49,42 +36,24 @@ class ButtonTestApp:
         self.create_interaction_section()
         self.create_icon_section()
         
-        # Update window and canvas scrollregion after layout
-        self.main_frame.update_idletasks()
-        self.canvas.config(scrollregion=self.canvas.bbox("all"))
-        
-        # Bind canvas resize event
-        self.canvas.bind("<Configure>", self._on_canvas_resize)
-        
-    def _on_mousewheel(self, event):
-        """Handle mousewheel scrolling"""
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        
-    def _on_canvas_resize(self, event):
-        """Handle canvas resize to adjust the inner frame width"""
-        # Update the width of the window to fill the canvas
-        self.canvas.itemconfig(self.canvas_window, width=event.width)
-        
     def create_header(self):
         """Create header with title and description"""
-        header_frame = tk.Frame(self.main_frame, bg=Theme.WHITE)
+        header_frame = ctk.CTkFrame(self.scrollable_frame, fg_color=Theme.WHITE)
         header_frame.pack(fill="x", pady=(0, 20))
         
-        title = tk.Label(
+        title = ctk.CTkLabel(
             header_frame,
             text="Modern Button Component Test",
-            font=Theme.get_font(Theme.FONT_2XL, "bold"),
-            fg=Theme.PRIMARY_DARK,
-            bg=Theme.WHITE
+            text_color=Theme.PRIMARY_DARK,
+            font=(Theme.FONT_FAMILY, Theme.FONT_2XL, "bold")
         )
         title.pack(anchor="w")
         
-        description = tk.Label(
+        description = ctk.CTkLabel(
             header_frame,
             text="This test demonstrates the various features of the ModernButton component.",
-            font=Theme.get_font(Theme.FONT_BASE),
-            fg=Theme.BLACK,
-            bg=Theme.WHITE,
+            text_color=Theme.BLACK,
+            font=(Theme.FONT_FAMILY, Theme.FONT_BASE),
             wraplength=800,
             justify="left"
         )
@@ -92,19 +61,18 @@ class ButtonTestApp:
     
     def create_section(self, title):
         """Create a section with title"""
-        section_frame = tk.Frame(self.main_frame, bg=Theme.WHITE)
+        section_frame = ctk.CTkFrame(self.scrollable_frame, fg_color=Theme.WHITE)
         section_frame.pack(fill="x", pady=(20, 10), anchor="w")
         
-        section_title = tk.Label(
+        section_title = ctk.CTkLabel(
             section_frame,
             text=title,
-            font=Theme.get_font(Theme.FONT_LG, "bold"),
-            fg=Theme.PRIMARY_DARK,
-            bg=Theme.WHITE
+            text_color=Theme.PRIMARY_DARK,
+            font=(Theme.FONT_FAMILY, Theme.FONT_LG, "bold")
         )
         section_title.pack(anchor="w")
         
-        content_frame = tk.Frame(section_frame, bg=Theme.WHITE)
+        content_frame = ctk.CTkFrame(section_frame, fg_color=Theme.WHITE)
         content_frame.pack(fill="x", pady=(10, 0))
         
         return content_frame
@@ -124,26 +92,30 @@ class ButtonTestApp:
             {"name": "Ghost", "variant": "ghost"}
         ]
         
+        # Fix: Create a frame to hold all buttons
+        buttons_frame = ctk.CTkFrame(content_frame, fg_color=Theme.WHITE)
+        buttons_frame.pack(fill="x")
+        
         for variant in variants:
-            button_frame = tk.Frame(content_frame, bg=Theme.WHITE)
+            button_frame = ctk.CTkFrame(buttons_frame, fg_color=Theme.WHITE)
             button_frame.pack(side="left", padx=10, pady=5)
             
-            # Create button
+            # Create button with width parameter to fix scaling issue
             button = ModernButton(
                 button_frame,
                 text=variant["name"],
                 command=lambda v=variant["name"]: self.show_message(f"{v} button clicked"),
-                variant=variant["variant"]
+                variant=variant["variant"],
+                width=120  # Fixed width instead of None
             )
             button.pack(pady=5)
             
             # Add label
-            label = tk.Label(
+            label = ctk.CTkLabel(
                 button_frame,
                 text=variant["variant"],
-                font=Theme.get_font(Theme.FONT_BASE-2),
-                fg=Theme.BLACK,
-                bg=Theme.WHITE
+                text_color=Theme.BLACK,
+                font=(Theme.FONT_FAMILY, Theme.FONT_SM)
             )
             label.pack()
     
@@ -159,32 +131,46 @@ class ButtonTestApp:
             {"name": "Extra Large", "size": "xl"}
         ]
         
+        # Fix: Create a frame to hold all buttons
+        buttons_frame = ctk.CTkFrame(content_frame, fg_color=Theme.WHITE)
+        buttons_frame.pack(fill="x")
+        
         for size_info in sizes:
-            button_frame = tk.Frame(content_frame, bg=Theme.WHITE)
+            button_frame = ctk.CTkFrame(buttons_frame, fg_color=Theme.WHITE)
             button_frame.pack(side="left", padx=10, pady=5)
             
-            # Create button
+            # Create button with width parameter
             button = ModernButton(
                 button_frame,
                 text=size_info["name"],
                 command=lambda s=size_info["name"]: self.show_message(f"{s} button clicked"),
-                size=size_info["size"]
+                size=size_info["size"],
+                width=120  # Fixed width instead of None
             )
             button.pack(pady=5)
             
             # Add label
-            label = tk.Label(
+            label = ctk.CTkLabel(
                 button_frame,
                 text=size_info["size"],
-                font=Theme.get_font(Theme.FONT_BASE-2),
-                fg=Theme.BLACK,
-                bg=Theme.WHITE
+                text_color=Theme.BLACK,
+                font=(Theme.FONT_FAMILY, Theme.FONT_SM)
             )
             label.pack()
     
     def create_radius_section(self):
         """Create corner radius section"""
         content_frame = self.create_section("Corner Radius Options")
+        
+        description = ctk.CTkLabel(
+            content_frame,
+            text="CustomTkinter supports corner radius natively.",
+            text_color=Theme.BLACK,
+            font=(Theme.FONT_FAMILY, Theme.FONT_BASE),
+            wraplength=800,
+            justify="left"
+        )
+        description.pack(anchor="w", pady=(0, 10))
         
         # Define corner radius options
         radius_options = [
@@ -195,25 +181,29 @@ class ButtonTestApp:
             {"name": "Pill", "radius": 22}
         ]
         
+        # Fix: Create a frame to hold all buttons
+        buttons_frame = ctk.CTkFrame(content_frame, fg_color=Theme.WHITE)
+        buttons_frame.pack(fill="x")
+        
         for radius in radius_options:
-            button_frame = tk.Frame(content_frame, bg=Theme.WHITE)
+            button_frame = ctk.CTkFrame(buttons_frame, fg_color=Theme.WHITE)
             button_frame.pack(side="left", padx=10, pady=5)
             
-            # Create button
+            # Create button with width parameter
             button = ModernButton(
                 button_frame,
                 text=radius["name"],
-                corner_radius=radius["radius"]
+                corner_radius=radius["radius"],
+                width=120  # Fixed width instead of None
             )
             button.pack(pady=5)
             
             # Add label
-            label = tk.Label(
+            label = ctk.CTkLabel(
                 button_frame,
                 text=f"radius={radius['radius']}",
-                font=Theme.get_font(Theme.FONT_BASE-2),
-                fg=Theme.BLACK,
-                bg=Theme.WHITE
+                text_color=Theme.BLACK,
+                font=(Theme.FONT_FAMILY, Theme.FONT_SM)
             )
             label.pack()
     
@@ -222,17 +212,16 @@ class ButtonTestApp:
         content_frame = self.create_section("Interactive Test")
         
         # Create a frame for the counter demo
-        counter_frame = tk.Frame(content_frame, bg=Theme.WHITE)
+        counter_frame = ctk.CTkFrame(content_frame, fg_color=Theme.WHITE)
         counter_frame.pack(pady=10, fill="x")
         
         # Counter display
         self.counter = 0
-        self.counter_label = tk.Label(
+        self.counter_label = ctk.CTkLabel(
             counter_frame,
             text=f"Counter: {self.counter}",
-            font=Theme.get_font(Theme.FONT_LG),
-            bg=Theme.WHITE,
-            fg=Theme.BLACK
+            text_color=Theme.BLACK,
+            font=(Theme.FONT_FAMILY, Theme.FONT_LG)
         )
         self.counter_label.pack(side="left", padx=(0, 20))
         
@@ -240,7 +229,8 @@ class ButtonTestApp:
         increment_button = ButtonFactory.create_primary_button(
             counter_frame,
             text="Increment",
-            command=self.increment_counter
+            command=self.increment_counter,
+            width=100  # Fixed width
         )
         increment_button.pack(side="left", padx=5)
         
@@ -248,7 +238,8 @@ class ButtonTestApp:
         decrement_button = ButtonFactory.create_outline_button(
             counter_frame,
             text="Decrement",
-            command=self.decrement_counter
+            command=self.decrement_counter,
+            width=100  # Fixed width
         )
         decrement_button.pack(side="left", padx=5)
         
@@ -256,19 +247,21 @@ class ButtonTestApp:
         reset_button = ButtonFactory.create_secondary_button(
             counter_frame,
             text="Reset",
-            command=self.reset_counter
+            command=self.reset_counter,
+            width=100  # Fixed width
         )
         reset_button.pack(side="left", padx=5)
         
         # Create a frame for the disabled button demo
-        disabled_frame = tk.Frame(content_frame, bg=Theme.WHITE)
+        disabled_frame = ctk.CTkFrame(content_frame, fg_color=Theme.WHITE)
         disabled_frame.pack(pady=(20, 10), fill="x")
         
         # Disabled button demo
         self.toggle_button = ModernButton(
             disabled_frame,
             text="Enabled Button",
-            command=lambda: self.show_message("Button clicked!")
+            command=lambda: self.show_message("Button clicked!"),
+            width=120  # Fixed width
         )
         self.toggle_button.pack(side="left", padx=(0, 20))
         
@@ -276,7 +269,8 @@ class ButtonTestApp:
         toggle_state_button = ButtonFactory.create_dark_button(
             disabled_frame,
             text="Toggle Enabled/Disabled",
-            command=self.toggle_button_state
+            command=self.toggle_button_state,
+            width=160  # Fixed width
         )
         toggle_state_button.pack(side="left")
     
@@ -295,14 +289,16 @@ class ButtonTestApp:
             draw.line([0, 0, icon_size, icon_size], fill=(100, 100, 255), width=2)
             draw.line([0, icon_size, icon_size, 0], fill=(100, 100, 255), width=2)
             
-            self.icon = ImageTk.PhotoImage(icon_image)
+            # Convert for CustomTkinter
+            self.icon = ctk.CTkImage(light_image=icon_image, dark_image=icon_image, size=(icon_size, icon_size))
             
             # Icon on left
             left_icon_button = ModernButton(
                 content_frame,
                 text="Left Icon",
                 icon=self.icon,
-                icon_position="left"
+                icon_position="left",
+                width=120  # Fixed width
             )
             left_icon_button.pack(side="left", padx=10)
             
@@ -311,7 +307,8 @@ class ButtonTestApp:
                 content_frame,
                 text="Right Icon",
                 icon=self.icon,
-                icon_position="right"
+                icon_position="right",
+                width=120  # Fixed width
             )
             right_icon_button.pack(side="left", padx=10)
             
@@ -326,32 +323,32 @@ class ButtonTestApp:
             icon_only_button.pack(side="left", padx=10)
             
         except Exception as e:
-            error_label = tk.Label(
+            error_label = ctk.CTkLabel(
                 content_frame,
                 text=f"Error creating icons: {e}",
-                bg=Theme.WHITE,
-                fg="red"
+                text_color="#ff0000",
+                font=(Theme.FONT_FAMILY, Theme.FONT_SM)
             )
             error_label.pack()
     
     def increment_counter(self):
         """Increment the counter and update display"""
         self.counter += 1
-        self.counter_label.config(text=f"Counter: {self.counter}")
+        self.counter_label.configure(text=f"Counter: {self.counter}")
         
     def decrement_counter(self):
         """Decrement the counter and update display"""
         self.counter -= 1
-        self.counter_label.config(text=f"Counter: {self.counter}")
+        self.counter_label.configure(text=f"Counter: {self.counter}")
         
     def reset_counter(self):
         """Reset the counter and update display"""
         self.counter = 0
-        self.counter_label.config(text=f"Counter: {self.counter}")
+        self.counter_label.configure(text=f"Counter: {self.counter}")
         
     def toggle_button_state(self):
         """Toggle the state of the demo button between enabled and disabled"""
-        if self.toggle_button.state == "disabled":
+        if self.toggle_button.cget('state') == "disabled":
             self.toggle_button.enable()
             self.toggle_button.configure(text="Enabled Button")
         else:
@@ -362,7 +359,12 @@ class ButtonTestApp:
         """Show a message (would typically use a proper notification system)"""
         print(message)
 
+
 if __name__ == "__main__":
-    root = tk.Tk()
+    # Initialize CustomTkinter
+    ctk.set_appearance_mode("light")
+    ctk.set_default_color_theme("blue")
+    
+    root = ctk.CTk()
     app = ButtonTestApp(root)
     root.mainloop()

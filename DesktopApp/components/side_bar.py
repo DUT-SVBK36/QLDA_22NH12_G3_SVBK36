@@ -1,11 +1,13 @@
 import os
 import sys
 import tkinter as tk
+import customtkinter as ctk
 from PIL import Image, ImageTk
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _config.theme import Theme
 
-class SideBar(tk.Frame):
+class SideBar(ctk.CTkFrame):
     """
     Side navigation bar component that provides access to main application screens.
     
@@ -25,12 +27,12 @@ class SideBar(tk.Frame):
             controller: Application controller to handle navigation
             **kwargs: Additional arguments for the Frame widget
         """
-        # Set fixed width and use PRIMARY_DARK background
+        # Set width and background color
         kwargs["width"] = 64
-        kwargs["bg"] = Theme.PRIMARY_DARK
-        kwargs["highlightthickness"] = 0
+        kwargs["fg_color"] = Theme.PRIMARY_DARK
+        kwargs["corner_radius"] = 0
         
-        # Initialize as Frame
+        # Initialize as CTkFrame
         super().__init__(parent, **kwargs)
         
         # Keep reference to controller for navigation
@@ -44,6 +46,7 @@ class SideBar(tk.Frame):
         
         # Track selected item
         self.selected_item = None
+        self.tooltip_window = None
         self.select_item("dashboard")  # Select dashboard by default
 
     def load_assets(self):
@@ -200,21 +203,19 @@ class SideBar(tk.Frame):
         
         # Logo at the top with some padding
         if self.assets.get("logo"):
-            self.logo_label = tk.Label(
+            self.logo_label = ctk.CTkLabel(
                 self, 
                 image=self.assets["logo"],
-                bg=Theme.PRIMARY_DARK,
-                padx=0,
-                pady=10
+                text="",  # No text, just the image
+                fg_color="transparent"
             )
             self.logo_label.pack(pady=(20, 40))  # Padding at top and bottom
         
         # Create navigation options container
-        self.nav_container = tk.Frame(
+        self.nav_container = ctk.CTkFrame(
             self,
-            bg=Theme.PRIMARY_DARK,
-            bd=0,
-            highlightthickness=0
+            fg_color=Theme.PRIMARY_DARK,
+            corner_radius=0
         )
         self.nav_container.pack(fill="x", expand=False)
         
@@ -232,11 +233,10 @@ class SideBar(tk.Frame):
         )
         
         # Settings option (at the bottom)
-        self.settings_container = tk.Frame(
+        self.settings_container = ctk.CTkFrame(
             self,
-            bg=Theme.PRIMARY_DARK,
-            bd=0,
-            highlightthickness=0
+            fg_color=Theme.PRIMARY_DARK,
+            corner_radius=0
         )
         self.settings_container.pack(side="bottom", fill="x", pady=20)
         
@@ -257,23 +257,22 @@ class SideBar(tk.Frame):
             parent = self.nav_container
         
         # Create frame for this navigation item
-        item_frame = tk.Frame(
+        item_frame = ctk.CTkFrame(
             parent,
-            bg=Theme.PRIMARY_DARK,
+            fg_color=Theme.PRIMARY_DARK,  # Normal state color
             width=64,
             height=64,
-            bd=0,
-            highlightthickness=0
+            corner_radius=0
         )
         item_frame.pack(pady=5)
         item_frame.pack_propagate(False)
         
         # Create the icon label
-        icon_label = tk.Label(
+        icon_label = ctk.CTkLabel(
             item_frame,
             image=self.assets.get(name),
-            bg=Theme.PRIMARY_DARK,
-            bd=0
+            text="",  # No text, just the image
+            fg_color="transparent"
         )
         icon_label.place(relx=0.5, rely=0.5, anchor="center")
         
@@ -282,34 +281,34 @@ class SideBar(tk.Frame):
             def show_tooltip(event):
                 # Only show tooltip if not currently selected
                 if self.selected_item != name:
+                    # Hide any existing tooltip
+                    self.hide_tooltip()
+                    
                     # Create tooltip window
                     x = event.widget.winfo_rootx() + 70
                     y = event.widget.winfo_rooty() + 20
                     
-                    tip = tk.Toplevel(event.widget)
-                    tip.wm_overrideredirect(True)
-                    tip.wm_geometry(f"+{x}+{y}")
-                    tip.attributes("-topmost", True)
+                    self.tooltip_window = ctk.CTkToplevel(event.widget)
+                    self.tooltip_window.wm_overrideredirect(True)
+                    self.tooltip_window.wm_geometry(f"+{x}+{y}")
+                    self.tooltip_window.attributes("-topmost", True)
+                    self.tooltip_window.configure(fg_color=Theme.PRIMARY_DARK)
                     
-                    label = tk.Label(
-                        tip, 
+                    label = ctk.CTkLabel(
+                        self.tooltip_window, 
                         text=tooltip, 
-                        bg=Theme.PRIMARY_DARK,
-                        fg=Theme.WHITE,
-                        font=Theme.get_font(Theme.FONT_BASE-2),
-                        padx=6, 
-                        pady=2,
-                        relief="solid",
-                        bd=1
+                        font=Theme.get_font(Theme.FONT_SM),
+                        text_color=Theme.WHITE,
+                        fg_color=Theme.PRIMARY_DARK,
+                        padx=6,
+                        pady=2
                     )
                     label.pack()
-                    
-                    event.widget._tooltip = tip
-                    
-            def hide_tooltip(event):
-                if hasattr(event.widget, "_tooltip") and event.widget._tooltip:
-                    event.widget._tooltip.destroy()
-                    event.widget._tooltip = None
+            
+            def hide_tooltip(_=None):
+                if self.tooltip_window:
+                    self.tooltip_window.destroy()
+                    self.tooltip_window = None
             
             # Use lambda to make sure the tooltip functions get proper event parameter
             item_frame.bind("<Enter>", lambda e: show_tooltip(e))
@@ -329,8 +328,8 @@ class SideBar(tk.Frame):
         icon_label.bind("<Button-1>", click_handler)
         
         # Make the cursor change to a hand when hovering over the icon or frame for better UX
-        item_frame.config(cursor="hand2")
-        icon_label.config(cursor="hand2")
+        item_frame.configure(cursor="hand2")
+        icon_label.configure(cursor="hand2")
         
         # Store components for later access
         return {
@@ -347,19 +346,24 @@ class SideBar(tk.Frame):
             
         if is_hover:
             # Show hover effect - use hover icon
-            icon_label.config(image=self.assets.get(f"{name}_hover"))
+            icon_label.configure(image=self.assets.get(f"{name}_hover"))
         else:
             # Remove hover effect - restore normal icon
-            icon_label.config(image=self.assets.get(name))
+            icon_label.configure(image=self.assets.get(name))
+    
+    def hide_tooltip(self):
+        """Hide the tooltip if it exists"""
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
     
     def select_item(self, name):
         """Select a navigation item and update UI accordingly"""
         # Deselect previous item if any
         if self.selected_item and self.selected_item in self.nav_items:
             prev_item = self.nav_items[self.selected_item]
-            prev_item["icon"].config(image=self.assets.get(self.selected_item))
-            # Keep background as PRIMARY_DARK, only change icon
-            prev_item["frame"].config(bg=Theme.PRIMARY_DARK)
+            prev_item["icon"].configure(image=self.assets.get(self.selected_item))
+            prev_item["frame"].configure(fg_color=Theme.PRIMARY_DARK)
         
         # Select new item
         if name in self.nav_items:
@@ -370,14 +374,17 @@ class SideBar(tk.Frame):
             item = self.nav_items[name]
             
             # Update icon to selected state
-            item["icon"].config(image=self.assets.get(f"{name}_selected"))
+            item["icon"].configure(image=self.assets.get(f"{name}_selected"))
             
-            # Optional: you can keep the background as PRIMARY_DARK for consistency
-            # or change it if you want visual emphasis through background
-            item["frame"].config(bg=Theme.PRIMARY_DARK)
+            # Update frame background to indicate selection
+            # With customtkinter, we change fg_color instead of using styles
+            item["frame"].configure(fg_color=Theme.PRIMARY_DARK)
             
             # Handle navigation if controller is provided
             if self.controller and hasattr(self.controller, "show_frame"):
                 self.controller.show_frame(name)
+            
+            # Hide any tooltip
+            self.hide_tooltip()
         
         return self.selected_item
