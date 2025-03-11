@@ -25,6 +25,7 @@ class Theme:
     FONT_XS = 12         # 0.75rem
     FONT_SM = 14         # 0.875rem
     FONT_BASE = 16       # 1rem
+    FONT_L =18
     FONT_LG = 22         # 1.375rem
     FONT_XL = 24         # 1.5rem
     FONT_2XL = 30        # 1.875rem

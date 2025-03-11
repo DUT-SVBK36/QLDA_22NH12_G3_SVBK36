@@ -8,8 +8,11 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from _config.theme import Theme
 from components.side_bar import SideBar
 from screens.dashboard import Dashboard
+
 # Import other screens as they are created
-# from screens.monitor import Monitor
+from screens.monitor.choosing import Choosing
+from screens.monitor.detect.remote_camera import RemoteCamera
+from screens.monitor.detect.own_camera import OwnCamera
 # from screens.settings import Settings
 # from screens.auth import Auth
 
@@ -89,6 +92,14 @@ class BPDApp(ctk.CTk):
         dashboard_frame.controller = self  # Set controller reference for navigation
         self.frames["dashboard"] = dashboard_frame
         
+        choosing_frame = Choosing(self.content_frame, self)
+        self.frames["monitor"] = choosing_frame
+
+        remote_camera_frame = RemoteCamera(self.content_frame, self)
+        self.frames["remote_camera"] = remote_camera_frame
+
+        own_camera_frame = OwnCamera(self.content_frame, self)
+        self.frames["own_camera"] = own_camera_frame
         # Add other screens as they are created
         # monitor_frame = Monitor(self.content_frame, self)
         # self.frames["monitor"] = monitor_frame
