@@ -13,11 +13,7 @@ class Choosing(ctk.CTkFrame):
         )
         self.controller = controller
 
-        # Load model and label encoder
-        self.model, self.label_encoder = load_model_and_encoder(
-            "d:/DHBK/3.2/Pbl-5/WebApp/models/best_model.resolved.h5",
-            "d:/DHBK/3.2/Pbl-5/WebApp/models/label_encoder.resolved.pkl"
-        )
+       
         
         self.create_layout()
     

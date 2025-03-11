@@ -6,6 +6,7 @@ from _config.theme import Theme
 from utils.model_loader import load_model_and_encoder
 import mediapipe as mp
 import numpy as np  # Import numpy
+import os  # Import os
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
@@ -32,10 +33,10 @@ class OwnCamera(ctk.CTkFrame):
         # Biến camera
         self.cap = None
 
-        self.model, self.label_encoder = load_model_and_encoder(
-            "d:/DHBK/3.2/Pbl-5/WebApp/models/best_model.resolved.h5",
-            "d:/DHBK/3.2/Pbl-5/WebApp/models/label_encoder.resolved.pkl"
-        )
+        model_path = os.path.join(os.path.dirname(__file__), 'models\/best_model.resolved.h5')
+        encoder_path = os.path.join(os.path.dirname(__file__), 'models\label_encoder.resolved.pkl')
+
+        self.model, self.label_encoder = load_model_and_encoder(model_path, encoder_path)
 
         # Initialize Mediapipe
         self.mp_pose = mp.solutions.pose
@@ -167,11 +168,8 @@ class OwnCamera(ctk.CTkFrame):
     def start_monitoring(self):
         """Bắt đầu nhận diện camera"""
         print("Starting camera...")
-        
         if self.cap is None or not self.cap.isOpened():
             self.cap = cv2.VideoCapture(0)  # Mở camera mặc định
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 448)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 293)
             if not self.cap.isOpened():
                 print("Camera không thể mở!")
                 return
@@ -204,7 +202,7 @@ class OwnCamera(ctk.CTkFrame):
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             head_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # MediaPipe indices for head landmarks
-            head_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in head_indices]).flatten()
+            head_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks.i.z] for i in head_indices]).flatten()
             return head_points
         return None
 
@@ -214,7 +212,7 @@ class OwnCamera(ctk.CTkFrame):
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             body_indices = [11, 12, 23, 24]  # MediaPipe indices for body landmarks
-            body_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in body_indices]).flatten()
+            body_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in body_indices]).flatten()
             return body_points
         return None
 
@@ -224,7 +222,7 @@ class OwnCamera(ctk.CTkFrame):
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             arm_indices = [11, 13, 15, 12, 14, 16]  # MediaPipe indices for arm landmarks
-            arm_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in arm_indices]).flatten()
+            arm_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in arm_indices]).flatten()
             return arm_points
         return None
 
@@ -234,7 +232,7 @@ class OwnCamera(ctk.CTkFrame):
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             leg_indices = [23, 25, 27, 24, 26, 28]  # MediaPipe indices for leg landmarks
-            leg_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in leg_indices]).flatten()
+            leg_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in leg_indices]).flatten()
             return leg_points
         return None
 
@@ -244,7 +242,7 @@ class OwnCamera(ctk.CTkFrame):
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             foot_indices = [29, 30, 31, 32]  # MediaPipe indices for foot landmarks
-            foot_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in foot_indices]).flatten()
+            foot_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in foot_indices]).flatten()
             return foot_points
         return None
 
