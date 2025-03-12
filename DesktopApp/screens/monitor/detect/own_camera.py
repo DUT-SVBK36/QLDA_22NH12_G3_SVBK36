@@ -1,13 +1,16 @@
 import customtkinter as ctk
 import cv2
 from PIL import Image, ImageTk
+import numpy as np
+import os
+import mediapipe as mp
+
+# Local imports
 from components.button import ButtonFactory
 from _config.theme import Theme
 from utils.model_loader import load_model_and_encoder
-import mediapipe as mp
-import numpy as np  # Import numpy
-import os  # Import os
 
+# Initialize MediaPipe
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5)
@@ -32,10 +35,11 @@ class OwnCamera(ctk.CTkFrame):
 
         # Biến camera
         self.cap = None
+        self.current_image = None  # Store reference to current CTkImage
 
-        model_path = os.path.join(os.path.dirname(__file__), 'models\/best_model.resolved.h5')
-        encoder_path = os.path.join(os.path.dirname(__file__), 'models\label_encoder.resolved.pkl')
-
+        # Load model and encoder
+        model_path = os.path.join(os.path.dirname(__file__), 'models/best_model.resolved.h5')
+        encoder_path = os.path.join(os.path.dirname(__file__), 'models/label_encoder.resolved.pkl')
         self.model, self.label_encoder = load_model_and_encoder(model_path, encoder_path)
 
         # Initialize Mediapipe
@@ -65,9 +69,18 @@ class OwnCamera(ctk.CTkFrame):
             self.container, fg_color=Theme.WHITE, width=448, height=293
         )
         self.camera_frame.grid(row=0, column=0, padx=(0, 10), pady=20, sticky="ne")
-
-        self.camera_label = ctk.CTkLabel(self.camera_frame, text="No Camera Feed", width=448, height=293)
-        self.camera_label.pack()
+        
+        # Create a label with no image initially
+        self.camera_label = ctk.CTkLabel(
+            self.camera_frame, 
+            text="No Camera Feed",
+            width=448, 
+            height=293,
+            fg_color=Theme.WHITE,
+            text_color=Theme.BLACK,
+            font=(Theme.FONT_FAMILY, Theme.FONT_XL)
+        )
+        self.camera_label.pack(expand=True, fill="both")
 
     def create_control_section(self):
         """Tạo phần điều khiển (bên phải)"""
@@ -110,7 +123,11 @@ class OwnCamera(ctk.CTkFrame):
         )
         self.time_selection.pack(pady=(0, 20), anchor="w")
 
-        self.start_button = ButtonFactory.create_dark_button(control_frame, "Start Monitoring", command=self.start_monitoring)
+        self.start_button = ButtonFactory.create_dark_button(
+            control_frame, 
+            text="Start Monitoring", 
+            command=self.start_monitoring
+        )
         self.start_button.pack(pady=(0, 20), anchor="w")
 
     def create_back_button(self):
@@ -149,7 +166,7 @@ class OwnCamera(ctk.CTkFrame):
                     )
 
                     # Dự đoán tư thế và hiển thị nhãn
-                    keypoints = self.extract_keypoints(frame_rgb)
+                    keypoints = self.extract_keypoints(results)
                     if keypoints is not None:
                         keypoints = np.expand_dims(keypoints, axis=0)
                         keypoints = keypoints.reshape((1, 33, 3, 1))
@@ -157,12 +174,19 @@ class OwnCamera(ctk.CTkFrame):
                         posture_label = self.get_multiple_predictions(prediction, threshold=0.5)
                         self.display_postures(frame_rgb, posture_label)
 
-                # Chuyển đổi sang ảnh Tkinter
-                frame_rgb = cv2.resize(frame_rgb, (448, 293))  
-                img = ImageTk.PhotoImage(Image.fromarray(frame_rgb))
-                self.camera_label.configure(image=img, text="")  
-                self.camera_label.image = img
+                # Resize the frame
+                frame_rgb = cv2.resize(frame_rgb, (448, 293))
+                
+                # Convert to PIL Image
+                pil_image = Image.fromarray(frame_rgb)
+                
+                # Create a CTkImage from PIL Image - this is the proper way for CustomTkinter
+                self.current_image = ctk.CTkImage(light_image=pil_image, dark_image=pil_image, size=(448, 293))
+                
+                # Update the label with the CTkImage
+                self.camera_label.configure(image=self.current_image, text="")
 
+        # Schedule the next update
         self.after(30, self.update_video)
 
     def start_monitoring(self):
@@ -173,14 +197,25 @@ class OwnCamera(ctk.CTkFrame):
             if not self.cap.isOpened():
                 print("Camera không thể mở!")
                 return
-        self.update_video()  # Cập nhật hình ảnh
+            # Change button to "Stop Monitoring" when camera starts
+            self.start_button.configure(
+                text="Stop Monitoring",
+                command=self.stop_camera
+            )
+            self.update_video()  # Cập nhật hình ảnh
+
 
     def stop_camera(self):
         """Dừng camera"""
         if self.cap and self.cap.isOpened():
             self.cap.release()
             self.cap = None
-            self.camera_label.configure(text="No Camera Feed", image="")  # Hiển thị lại chữ mặc định
+            self.camera_label.configure(text="No Camera Feed", image=None)
+        # Change button back to "Start Monitoring" when camera stops
+        self.start_button.configure(
+            text="Start Monitoring",
+            command=self.start_monitoring
+        )
 
     def go_back(self):
         """Quay lại màn hình trước"""
@@ -188,78 +223,76 @@ class OwnCamera(ctk.CTkFrame):
         if self.controller:
             self.controller.show_frame("monitor")
     
-    def extract_keypoints(self, image):
-        results = self.pose.process(image)
+    def extract_keypoints(self, results):
+        """Extract keypoints from MediaPipe results directly"""
         if results.pose_landmarks:
             keypoints = np.array([[lm.x, lm.y, lm.z] for lm in results.pose_landmarks.landmark]).flatten()
             return keypoints
-        else:
-            return None
+        return None
 
-    def extract_head_keypoints(self, image):
+    def extract_head_keypoints(self, results):
         """Extract head keypoints (nose, eyes, ears)"""
-        results = self.pose.process(image)
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             head_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # MediaPipe indices for head landmarks
-            head_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks.i.z] for i in head_indices]).flatten()
+            head_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in head_indices]).flatten()
             return head_points
         return None
 
-    def extract_body_keypoints(self, image):
+    def extract_body_keypoints(self, results):
         """Extract torso keypoints (shoulders, chest, hips)"""
-        results = self.pose.process(image)
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             body_indices = [11, 12, 23, 24]  # MediaPipe indices for body landmarks
-            body_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in body_indices]).flatten()
+            body_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in body_indices]).flatten()
             return body_points
         return None
 
-    def extract_arm_keypoints(self, image):
+    def extract_arm_keypoints(self, results):
         """Extract arm keypoints (shoulders to wrists)"""
-        results = self.pose.process(image)
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             arm_indices = [11, 13, 15, 12, 14, 16]  # MediaPipe indices for arm landmarks
-            arm_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in arm_indices]).flatten()
+            arm_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in arm_indices]).flatten()
             return arm_points
         return None
 
-    def extract_leg_keypoints(self, image):
+    def extract_leg_keypoints(self, results):
         """Extract leg keypoints (hips to ankles)"""
-        results = self.pose.process(image)
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             leg_indices = [23, 25, 27, 24, 26, 28]  # MediaPipe indices for leg landmarks
-            leg_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in leg_indices]).flatten()
+            leg_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in leg_indices]).flatten()
             return leg_points
         return None
 
-    def extract_foot_keypoints(self, image):
+    def extract_foot_keypoints(self, results):
         """Extract foot keypoints (feet landmarks)"""
-        results = self.pose.process(image)
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
             foot_indices = [29, 30, 31, 32]  # MediaPipe indices for foot landmarks
-            foot_points = np.array([[landmarks[i].x, landmarks.i.y, landmarks.i.z] for i in foot_indices]).flatten()
+            foot_points = np.array([[landmarks[i].x, landmarks[i].y, landmarks[i].z] for i in foot_indices]).flatten()
             return foot_points
         return None
 
-    def get_pose_results(self, image):
-        """
-        Get raw MediaPipe pose results for visualization.
-        """
-        results = self.pose.process(image)
-        return results
-
     def get_multiple_predictions(self, prediction, threshold=0.5):
-        # Implement logic to get multiple predictions above threshold
-        # Example: return ["Good Posture"] if prediction[0][0] > threshold else ["Bad Posture"]
+        """Get prediction labels above threshold"""
         predicted_label = self.label_encoder.inverse_transform([np.argmax(prediction)])
         return predicted_label
 
     def display_postures(self, frame, postures):
-        # Implement logic to display postures on frame
-        # Example: cv2.putText(frame, postures[0], (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-        cv2.putText(frame, postures[0], (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        """Display posture labels on the frame"""
+        # Convert posture name to string if it's not already
+        posture_text = str(postures[0]) if isinstance(postures, (list, np.ndarray)) else str(postures)
+        
+        # Add text to frame with proper font scale and positioning
+        cv2.putText(
+            frame,
+            posture_text,
+            (20, 40),  # Position at top-left with some margin
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,  # Font scale
+            (255, 0, 0),  # Blue color in RGB
+            2,  # Line thickness
+            cv2.LINE_AA  # Anti-aliased line type
+        )
