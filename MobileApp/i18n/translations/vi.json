@@ -1,0 +1,30 @@
+{
+    "auth": {
+      "login": {
+        "title": "Đăng nhập",
+        "subtitle": "Đăng nhập để tiếp tục",
+        "username": "Tên đăng nhập",
+        "password": "Mật khẩu",
+        "usernamePlaceholder": "Nhập tên đăng nhập",
+        "passwordPlaceholder": "Nhập mật khẩu",
+        "submit": "Đăng nhập",
+        "recommend": "Chưa có tài khoản?",
+        "register": "Đăng ký"
+      },
+      "register": {
+        "title": "Đăng ký",
+        "subtitle": "Tạo tài khoản mới",
+        "username": "Tên đăng nhập",
+        "email": "Email",
+        "password": "Mật khẩu",
+        "confirmPassword": "Xác nhận mật khẩu",
+        "usernamePlaceholder": "Nhập tên đăng nhập",
+        "emailPlaceholder": "Nhập email",
+        "passwordPlaceholder": "Nhập mật khẩu",
+        "confirmPasswordPlaceholder": "Xác nhận mật khẩu",
+        "submit": "Đăng ký",
+        "recommend": "Đã có tài khoản?",
+        "login": "Đăng nhập"
+      }
+    }
+  }
