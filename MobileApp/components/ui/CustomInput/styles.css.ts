@@ -1,7 +1,6 @@
-import { Colors } from '@/constants/Colors';
-import { StyleSheet, useColorScheme } from 'react-native';
 
-const colorScheme = useColorScheme();
+import { StyleSheet } from 'react-native';
+
 const styles = StyleSheet.create({
     container: {
         width: '100%',
@@ -9,7 +8,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: Colors[colorScheme ?? 'light'].text,
         paddingVertical: 8,
         paddingHorizontal: "auto",
         marginBottom: 16,
@@ -21,13 +19,11 @@ const styles = StyleSheet.create({
         paddingLeft: 4,
         fontSize: 14,
         fontWeight: 'semibold',
-        color: Colors[colorScheme ?? 'light'].text,
     },
     input: {
         flex: 1,
         fontFamily: 'Lexend',
         fontSize: 14,
-        color: Colors[colorScheme ?? 'light'].text,
         backgroundColor: "transparent",
     }
 });

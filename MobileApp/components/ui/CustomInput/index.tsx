@@ -1,5 +1,6 @@
 import { Text, View, TextInput, useColorScheme } from "react-native";
 import styles from "./styles.css";
+import { Colors } from "@/constants/Colors";
 
 type textContentType = 
     | 'none'
@@ -59,9 +60,19 @@ export default function CustomInput(
 ){
     const colorScheme = useColorScheme();
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput style={styles.input} 
+        <View style={[
+            styles.container,
+            {borderBottomColor: Colors[colorScheme ?? 'light'].text,}
+
+        ]}>
+            <Text style={[
+                styles.label,
+                {color: Colors[colorScheme ?? 'light'].text,}
+                ]}>{label}</Text>
+            <TextInput style={[
+                styles.input,
+                {color: Colors[colorScheme ?? 'light'].text,}
+            ]} 
                 textContentType={type}
                 value={value}
                 onChangeText={onChangeText}
