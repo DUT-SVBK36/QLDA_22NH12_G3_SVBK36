@@ -9,23 +9,6 @@ interface LanguageOptProps {
 
 
 export default function LanguageScreen() {
-    const languageOpt = memo(({lang, onPress} : LanguageOptProps) => {
-        return (
-            <TouchableOpacity style={{
-                borderBottomColor: '#fff',
-                borderBottomWidth: 1,
-                padding: 10,
-            }}
-                onPress={onPress}
-            >
-                <Text
-                style={[
-                    Fonts.bodySmall
-                ]}
-                >{lang}</Text>
-            </TouchableOpacity>
-        )
-    });
 
     return (
         <>

@@ -1,15 +1,23 @@
-import { router } from "expo-router";
-import { Text, Touchable, TouchableOpacity, View } from "react-native";
+import BackgroundView from "@/components/layout/BackgroundView";
+import CustomButton from "@/components/ui/CustomButton";
+import SharedAssets from "@/shared/SharedAssets";
+import { Text, View } from "react-native";
+
+
 
 export default function DetectScreen(){
     return (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text>detect</Text>
-            <TouchableOpacity onPress={() => router.push('/login')}>
-                <Text style={{
-                    color: 'white'
-                }}>To Login</Text>
-            </TouchableOpacity>
-        </View>
+        <BackgroundView
+            customBackground={SharedAssets.Bg}
+        >
+            <View>
+                <Text>Camera</Text>
+            </View>
+            <CustomButton
+                variant="orange"
+                label="Connect"
+                onPress={() => alert('connect')}
+            />
+        </BackgroundView>
     )
 }
