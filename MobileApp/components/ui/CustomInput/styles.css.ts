@@ -1,26 +1,31 @@
+
 import { StyleSheet } from 'react-native';
-const CustomInputCss = StyleSheet.create({
+
+const styles = StyleSheet.create({
     container: {
         width: '100%',
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
         paddingVertical: 8,
         paddingHorizontal: "auto",
+        marginBottom: 16,
     },
     label: {
+        fontFamily: 'Lexend',
         minWidth: 100,
         textAlign: 'left',
-        fontSize: 16,
-        color: '#000',
+        paddingLeft: 4,
+        fontSize: 14,
+        fontWeight: 'semibold',
     },
     input: {
         flex: 1,
-        fontSize: 16,
-        color: '#000',
+        fontFamily: 'Lexend',
+        fontSize: 14,
+        backgroundColor: "transparent",
     }
 });
 
-export default CustomInputCss;
+export default styles;
