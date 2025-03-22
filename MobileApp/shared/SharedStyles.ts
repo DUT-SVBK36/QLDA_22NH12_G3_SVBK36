@@ -2,6 +2,11 @@ import { StyleSheet } from 'react-native';
 
 export const Fonts = StyleSheet.create({
   // Text styles by size
+  h1Large: {
+    fontFamily: 'Lexend-Bold',
+    fontSize: 32,
+    lineHeight: 40,
+  },
   h1: {
     fontFamily: 'Lexend-Bold',
     fontSize: 28,
@@ -53,5 +58,24 @@ export const Fonts = StyleSheet.create({
   },
   bold: {
     fontFamily: 'Lexend-Bold',
+  },
+});
+
+export const Container = StyleSheet.create({
+  base: {
+    flex: 1,
+    display: "flex",
+    paddingHorizontal: 16,
+    paddingTop: 54,
+  },
+  baseContent: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 16,
+  },
+  title: {
+    textAlign: "left",
+    width: "100%",
+    marginBottom: 12
   },
 });

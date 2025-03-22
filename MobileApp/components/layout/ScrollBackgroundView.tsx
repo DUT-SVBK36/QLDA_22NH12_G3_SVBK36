@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { ScrollView, StyleSheet, StyleProp, ViewStyle, ScrollViewProps, useColorScheme } from 'react-native';
+import { ScrollView, StyleSheet, StyleProp, ViewStyle, ScrollViewProps, useColorScheme, ImageBackground } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ interface ScrollBackgroundViewProps extends ScrollViewProps {
   style?: StyleProp<ViewStyle>;
   useSafeArea?: boolean;
   statusBarStyle?: 'auto' | 'inverted' | 'light' | 'dark';
-  customBackground?: string;
+  customBackground?: any;
 }
 
 export default function ScrollBackgroundView({
@@ -52,6 +52,16 @@ export default function ScrollBackgroundView({
         showsVerticalScrollIndicator={false}
         {...scrollViewProps}
       >
+        <ImageBackground source={customBackground} 
+              resizeMode='cover'
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                ...safeAreaStyle,
+              }}/>
         {children}
       </ScrollView>
     </>
