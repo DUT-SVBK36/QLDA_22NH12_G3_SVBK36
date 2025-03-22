@@ -42,6 +42,11 @@ export const Fonts = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
+  small: {
+    fontFamily: 'Lexend-Medium',
+    fontSize: 10,
+    lineHeight: 12,
+  },
   
   // Just font families for custom use
   light: {
