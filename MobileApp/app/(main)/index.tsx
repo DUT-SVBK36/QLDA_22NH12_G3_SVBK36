@@ -112,6 +112,8 @@ export default function HomeScreen(){
     </>
   )
 }
+
+
 const styles = StyleSheet.create({
   titleTint: {
     color: BaseColors.dark_pri,
