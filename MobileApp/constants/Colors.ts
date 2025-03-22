@@ -6,7 +6,7 @@
 /**
  * BaseColors colors
  */
-const BaseColors = {
+export const BaseColors = {
   primary: '#b7b1f2',
   secondary: '#fdb7ea',
   tertiary: '#ffdccc',

@@ -5,9 +5,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 40,
+    paddingTop: 56,
     paddingBottom: 32,
-    justifyContent: 'center',
+
   },
   languageContainer: {
     position: 'absolute',
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   registerContainer: {
-    marginTop: 24,
+    marginTop: 'auto',
     flexDirection: 'row',
     justifyContent: 'center',
     width: '100%',

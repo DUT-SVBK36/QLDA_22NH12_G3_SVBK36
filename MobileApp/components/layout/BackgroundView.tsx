@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle, useColorScheme } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle, useColorScheme, ImageBackground } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ interface BackgroundViewProps {
   style?: StyleProp<ViewStyle>;
   useSafeArea?: boolean;
   statusBarStyle?: 'auto' | 'inverted' | 'light' | 'dark';
-  customBackground?: string;
+  customBackground?: any;
 }
 
 export default function BackgroundView({
@@ -34,20 +34,26 @@ export default function BackgroundView({
   } : {};
 
   return (
-    <View style={[
-      styles.container, 
-      { backgroundColor },
+    <View style={[ 
       safeAreaStyle,
+      { 
+        backgroundColor: customBackground ? 'transparent' : backgroundColor,
+        paddingHorizontal: 20,
+      },
       style
     ]}>
+      
+      <ImageBackground source={customBackground} 
+      resizeMode='cover'
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+      }}/>
       <StatusBar style={statusBarStyle} />
       {children}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
