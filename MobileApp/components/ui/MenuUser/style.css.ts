@@ -27,8 +27,8 @@ export const styles = StyleSheet.create({
     badge: {
         alignSelf: "flex-start",
         backgroundColor: BaseColors.primary,
-        paddingHorizontal: 8,
         paddingVertical: 4,
+        paddingHorizontal: 8,
         borderRadius: 12,
         marginTop: 4,
         textAlign: "center",
