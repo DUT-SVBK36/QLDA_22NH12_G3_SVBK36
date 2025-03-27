@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, StyleProp, ViewStyle, View, useColorScheme } from 'react-native';
+import { StyleSheet, StyleProp, ViewStyle, View, useColorScheme, ImageBackground } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Colors } from '@/constants/Colors';
+import SharedAssets from '@/shared/SharedAssets';
 
 interface SafeScreenProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface SafeScreenProps {
   backgroundColor?: string;
   statusBarStyle?: 'auto' | 'inverted' | 'light' | 'dark';
   edges?: Edge[];
+  hasBackground?: boolean;
 }
 
 export default function SafeScreen({
@@ -18,6 +20,7 @@ export default function SafeScreen({
   backgroundColor,
   statusBarStyle = 'light',
   edges = ['top', 'right', 'bottom', 'left'],
+  hasBackground = false,
 }: SafeScreenProps) {
   const colorScheme = useColorScheme();
   
@@ -26,6 +29,18 @@ export default function SafeScreen({
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }, style]}>
+      {hasBackground && (
+         <ImageBackground
+            source={SharedAssets.Bg}
+            resizeMode="cover"
+            style={{
+                width: "100%",
+                height: "100%",
+                position: "absolute",
+            }}
+          />
+      )}
+      {/* SafeAreaView handles the safe area insets */}
       <StatusBar style={statusBarStyle} />
       <SafeAreaView style={styles.safeArea} edges={edges}>
         {children}
@@ -37,6 +52,7 @@ export default function SafeScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    position: 'static',
   },
   safeArea: {
     flex: 1,
