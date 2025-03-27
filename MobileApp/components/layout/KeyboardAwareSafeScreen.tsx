@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, StyleProp, ViewStyle, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, StyleProp, ViewStyle, KeyboardAvoidingView, Platform, ScrollView, ImageBackground } from 'react-native';
 import { Edge } from 'react-native-safe-area-context';
 import SafeScreen from './SafeScreen';
+import SharedAssets from '@/shared/SharedAssets';
 
 interface KeyboardAwareSafeScreenProps {
   children: React.ReactNode;
@@ -25,6 +26,9 @@ export default function KeyboardAwareSafeScreen({
   keyboardShouldPersistTaps = 'handled',
 }: KeyboardAwareSafeScreenProps) {
   return (
+
+
+    <>
     <SafeScreen
       style={style}
       backgroundColor={backgroundColor}
@@ -46,6 +50,8 @@ export default function KeyboardAwareSafeScreen({
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeScreen>
+    
+    </>
   );
 }
 

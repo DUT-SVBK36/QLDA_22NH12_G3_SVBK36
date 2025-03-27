@@ -5,6 +5,7 @@ import MenuUser from "@/components/ui/MenuUser";
 import SafeScreen from "@/components/layout/SafeScreen";
 import SharedAssets from "@/shared/SharedAssets";
 import { Container } from "@/shared/SharedStyles";
+import { router } from 'expo-router';
 
 export default function UserMenu() {
   const colorScheme = useColorScheme();
@@ -20,7 +21,11 @@ export default function UserMenu() {
         <View style={styles.divider} />
         <MenuOption icon="check-circle" label="Goals" />
         <MenuOption icon="history" label="History" />
-        <MenuOption icon="settings" label="Settings" />
+        <MenuOption 
+          icon="settings" 
+          label="Settings" 
+          onPress={() => router.push('/(main)/setting')} 
+        />
         <View style={styles.divider} />
         <MenuOption icon="info" label="About us" />
         <MenuOption icon="log-out" label="Log out" />
