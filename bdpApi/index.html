@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Phát Hiện Tư Thế</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            max-width: 800px; 
+            margin: 0 auto;
+            padding: 15px;
+        }
+        #videoFeed { 
+            max-width: 100%; 
+            border: 2px solid #333;
+            background-color: #f0f0f0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        #stopBtn {
+            background-color: #f44336;
+        }
+        #predictionInfo {
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        #alertContainer {
+            background-color: #ffdddd;
+            color: red;
+            padding: 10px;
+            margin: 10px 0;
+            display: none;
+            border-radius: 5px;
+        }
+        #loadingIndicator {
+            display: none;
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #4CAF50;
+            animation: spin 1s ease-in-out infinite;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Hệ Thống Phát Hiện Tư Thế</h1>
+    
+    <div class="controls">
+        <button id="startBtn">Bắt Đầu Camera</button>
+        <button id="stopBtn">Dừng Camera</button>
+    </div>
+
+    <div id="loadingIndicator">
+        <div class="spinner"></div>
+        <span>Đang khởi động camera...</span>
+    </div>
+
+    <div id="alertContainer">
+        <p id="alertMessage"></p>
+    </div>
+
+    <img id="videoFeed" width="640" height="480" alt="Video Feed">
+    <div id="predictionInfo">Chưa có dữ liệu</div>
+
+    <script>
+        const videoFeed = document.getElementById('videoFeed');
+        const predictionInfo = document.getElementById('predictionInfo');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const alertContainer = document.getElementById('alertContainer');
+        const alertMessage = document.getElementById('alertMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        let predictionInterval;
+        let alertCheckInterval;
+        let videoRefreshInterval;
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // API Endpoints
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Hàm phát âm thanh cảnh báo
+        async function playAlertSound(audioUrl) {
+            try {
+                const response = await fetch(API_BASE_URL + audioUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+                source.start(0);
+            } catch (error) {
+                console.error('Lỗi phát âm thanh:', error);
+            }
+        }
+
+        let lastAlertTime = 0;
+        const ALERT_COOLDOWN = 10; // Thời gian chờ giữa các lần cảnh báo (giây)
+        let isCameraRunning = false;
+        
+        // Hàm kiểm tra cảnh báo tư thế
+        function checkPostureAlert() {
+            if (!isCameraRunning) return;
+
+            const currentTime = Date.now() / 1000;
+
+            fetch(`${API_BASE_URL}/check_posture_alert`, {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.alert) {
+                    if (currentTime - lastAlertTime >= ALERT_COOLDOWN) {
+                        alertContainer.style.display = 'block';
+                        alertMessage.textContent = `Cảnh báo: Bạn đang ngồi ${data.posture} trong ${Math.round(data.duration)} giây`;
+                        
+                        playAlertSound(data.audio_url);
+                        lastAlertTime = currentTime;
+                    }
+                } else {
+                    alertContainer.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi kiểm tra cảnh báo:', error);
+            });
+        }
+
+        // Hàm cập nhật liên tục video feed
+        function refreshVideoFeed() {
+            if (!isCameraRunning) return;
+            
+            const timestamp = new Date().getTime();
+            videoFeed.src = `${API_BASE_URL}/video_feed?t=${timestamp}`;
+        }
+
+        async function startCamera() {
+            try {
+                // Hiển thị loading indicator
+                loadingIndicator.style.display = 'block';
+                startBtn.disabled = true;
+                
+                // Thiết lập timeout để đảm bảo không đợi quá lâu
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), 5000)
+                );
+                
+                // Gọi API khởi động camera
+                const fetchPromise = fetch(`${API_BASE_URL}/start_camera`, { method: 'GET' });
+                
+                // Sử dụng Promise.race để lấy kết quả từ promise nào nhanh hơn
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                const data = await response.json();
+                
+                // Đặt cờ camera đang chạy
+                isCameraRunning = true;
+
+                // Thiết lập video feed và khởi động ngay
+                videoFeed.src = `${API_BASE_URL}/video_feed?t=${new Date().getTime()}`;
+                
+                // Bắt đầu cập nhật dự đoán
+                startPredictionUpdates();
+
+                // Bắt đầu kiểm tra cảnh báo
+                alertCheckInterval = setInterval(checkPostureAlert, 1000);
+                
+                // Thiết lập interval để làm mới video feed nếu bị đứng
+                videoRefreshInterval = setInterval(() => {
+                    if (isCameraRunning) {
+                        const timestamp = new Date().getTime();
+                        if (videoFeed.naturalWidth === 0) {
+                            console.log("Phát hiện video feed bị đứng, làm mới...");
+                            videoFeed.src = `${API_BASE_URL}/video_feed?t=${timestamp}`;
+                        }
+                    }
+                }, 5000);
+                
+                // Ẩn loading indicator
+                loadingIndicator.style.display = 'none';
+                startBtn.disabled = false;
+            } catch (error) {
+                console.error('Lỗi khởi động camera:', error);
+                alert('Không thể khởi động camera. Vui lòng thử lại.');
+                loadingIndicator.style.display = 'none';
+                startBtn.disabled = false;
+                isCameraRunning = false;
+            }
+        }
+
+        async function stopCamera() {
+            try {
+                await fetch(`${API_BASE_URL}/stop_camera`, { method: 'GET' });
+                
+                // Đặt cờ camera đã dừng
+                isCameraRunning = false;
+
+                // Xóa video feed
+                videoFeed.src = '';
+                
+                // Dừng cập nhật dự đoán và cảnh báo
+                clearInterval(predictionInterval);
+                clearInterval(alertCheckInterval);
+                clearInterval(videoRefreshInterval);
+                
+                // Ẩn cảnh báo
+                alertContainer.style.display = 'none';
+                
+                predictionInfo.textContent = 'Chưa có dữ liệu';
+            } catch (error) {
+                console.error('Lỗi dừng camera:', error);
+            }
+        }
+
+        // Hàm cập nhật dự đoán
+        function startPredictionUpdates() {
+            predictionInterval = setInterval(async () => {
+                if (!isCameraRunning) return;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/get_prediction`, { method: 'GET' });
+                    const prediction = await response.json();
+                    
+                    const confidencePercent = (prediction.confidence * 100).toFixed(2);
+                    predictionInfo.textContent = `Tư Thế: ${prediction.class_vi || 'Chưa xác định'} (Độ Tin Cậy: ${confidencePercent}%)`;
+                } catch (error) {
+                    console.error('Lỗi cập nhật dự đoán:', error);
+                }
+            }, 500);
+        }
+
+        // Xử lý lỗi tải video feed
+        videoFeed.onerror = function() {
+            if (isCameraRunning) {
+                console.log('Lỗi tải video feed, thử lại...');
+                setTimeout(refreshVideoFeed, 1000);
+            }
+        };
+
+        // Tạo kết nối sớm để giảm thời gian khởi động
+        function preconnect() {
+            fetch(`${API_BASE_URL}/get_prediction`, { method: 'GET' })
+                .catch(() => console.log('Preconnect completed'));
+        }
+
+        // Gán sự kiện cho nút
+        startBtn.addEventListener('click', startCamera);
+        stopBtn.addEventListener('click', stopCamera);
+        
+        // Preconnect khi trang tải xong
+        window.addEventListener('load', preconnect);
+    </script>
+</body>
+</html>
