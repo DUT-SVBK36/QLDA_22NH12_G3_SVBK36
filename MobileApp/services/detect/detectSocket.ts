@@ -26,8 +26,8 @@ export const initSocket = (): WebSocket => {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          const eventType = data.type || 'message';
-          triggerEvent(eventType, data.payload);
+          const eventType = data.type;
+          triggerEvent(eventType, data.data);
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
           triggerEvent('message', event.data);

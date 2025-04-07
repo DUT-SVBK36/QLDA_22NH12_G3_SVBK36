@@ -4,6 +4,7 @@ import CustomButton from "@/components/ui/CustomButton";
 import CustomWindow from "@/components/ui/CustomWindow";
 import { BaseColors } from "@/constants/Colors";
 import { useSocket } from "@/contexts/DetectContext";
+import { Frame, PostureUpdate, Statistics } from "@/models/posture.model";
 import SharedAssets from "@/shared/SharedAssets";
 import { Container, Fonts } from "@/shared/SharedStyles";
 import { useEffect, useState } from "react";
@@ -20,6 +21,7 @@ interface PostureData {
 export default function DetectScreen() {
   const [isStarted, setIsStarted] = useState(false);
   const [wrongPostures, setWrongPostures] = useState<PostureData[]>([]);
+  const [livePostureData, setLivePostureData] = useState<PostureUpdate | null>(null);
   const { socket, isConnected, connect, disconnect, emit } = useSocket();
 
   useEffect(() => {
@@ -28,11 +30,23 @@ export default function DetectScreen() {
     connect();
 
     // Listen for posture events
-    socket.on('posture', (data: PostureData) => {
-      console.log('Received posture data:', data);
-      setWrongPostures(prev => [...prev, data]);
+    socket.on('posture_update', (data: PostureUpdate) => {
+      console.log('Raw posture update data:', data); // Log the raw data first
+      setLivePostureData(data);
     });
-
+    socket.on('statistics', (data: Statistics) => {
+      console.log('Statistics:', data);
+    });
+    socket.on('frame', (data: Frame) => {
+      console.log('Image:', data);
+      setWrongPostures(prev => [...prev, {
+        id: new Date().toISOString(),
+        image: data.image,
+        posture: data.posture.posture_vi,
+        accuracy: data.posture.confidence,
+        timestamp: data.timestamp
+      }]);
+    });
     // Add connection status listener
     socket.on('connect', () => {
       console.log('Connected to detection server');
@@ -44,7 +58,9 @@ export default function DetectScreen() {
 
     // Clean up event listeners
     return () => {
-      socket.off('posture');
+      socket.off('posture_update');
+      socket.off('statistics');
+      socket.off('frame')
       socket.off('connect');
       socket.off('disconnect');
       disconnect();
@@ -54,12 +70,10 @@ export default function DetectScreen() {
   // Update the event handlers in detect.tsx
   const handleStartDetection = () => {
     if (socket && isConnected) {
-      const detectMessage = {
-        type: 'detect',
-        client: 'mobile',
-        timestamp: new Date().toISOString()
-      };
-      emit('message', detectMessage);
+      const message = {
+        action: "start"
+      }
+      emit('action', message);
       console.log('Started detection');
       setIsStarted(true);
       setWrongPostures([]);
@@ -68,12 +82,10 @@ export default function DetectScreen() {
   
   const handleStopDetection = () => {
     if (socket && isConnected) {
-      const stopMessage = {
-        type: 'stopDetect',
-        client: 'mobile',
-        timestamp: new Date().toISOString()
-      };
-      emit('message', stopMessage);
+      const message = {
+        action: "stop"
+      }
+      emit('action', message);
       console.log('Stopped detection');
       setIsStarted(false);
     }
@@ -114,6 +126,12 @@ export default function DetectScreen() {
             <Text style={styles.statusText}>
               {isConnected ? 'Detection is active' : 'Connecting...'}
             </Text>
+            {livePostureData && (
+              <Text style={styles.statusText}>
+                Current posture: {livePostureData.posture.posture_vi} 
+                Accuracy: {(livePostureData.posture.confidence * 100).toFixed(2)}%
+              </Text>
+            )}
           </CustomWindow>
           : 
           <RecentSession />
@@ -157,9 +175,9 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   statusText: {
-    color: BaseColors.dark_blue,
-    textAlign: "center",
-    padding: 8
+    color: "white",
+    fontFamily: "Lexend",
+    marginLeft: 8
   },
   noPostures: {
     color: BaseColors.secondary,
