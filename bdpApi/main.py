@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from app.api.router import router as api_router
@@ -9,6 +10,15 @@ from app.config import BASE_DIR, SCREENSHOTS_DIR, logger
 
 # Khởi tạo FastAPI
 app = FastAPI(title="Posture Detection API")
+
+# Cấu hình CORS
+cors_config = {
+    "allow_origins": ["*"],  # Cho phép tất cả các origins
+    "allow_credentials": True,
+    "allow_methods": ["*"],  # Cho phép tất cả các HTTP methods
+    "allow_headers": ["*"],  # Cho phép tất cả các headers
+}
+app.add_middleware(CORSMiddleware, **cors_config)
 
 # Thêm API router
 app.include_router(api_router, prefix="/api")

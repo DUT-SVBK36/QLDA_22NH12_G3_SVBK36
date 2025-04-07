@@ -31,7 +31,9 @@ export default function WrongPostureCard(
                 styles.container
             ]}>
                 <Image
-                    source={{ uri: config.BASE_URL + image }}
+                    source={{
+                        uri: `data:image/jpeg;base64,${image}`
+                    }}
                     style={[
                         styles.img
                     ]}
@@ -40,26 +42,28 @@ export default function WrongPostureCard(
                     styles.content
                 ]}>
                     <Text style={[
-                        Fonts.body,
+                        Fonts.caption,
                         styles.titleTint
                     ]}>
-                        {detectedPosture} ({(accuracy * 100).toFixed(2)}%)
+                        {detectedPosture} 
+                        {/* ({(accuracy * 100).toFixed(2)}%) */}
                     </Text>
                     <Text style={[
-                        Fonts.bodySmall,
-                        styles.tint
+                        Fonts.caption,
+                        styles.tint,
+                        { marginBottom: 4}
                     ]}>
-                        {desc}
+                        Acc: {(accuracy * 100).toFixed(2)}%
                     </Text>
                     <Text style={[
                         Fonts.small,
-                        styles.tint
+                        styles.tint,
                     ]}>
                         <FontAwesome5 
                             name="clock" 
-                            size={12} 
+                            size={10} 
                             color={"white"}
-                        />  {timestamp}
+                        />  {new Date(timestamp).toLocaleString("vi-VN", { hour12: false })}
                     </Text>
                 </View>
             </TouchableOpacity>

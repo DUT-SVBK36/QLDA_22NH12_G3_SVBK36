@@ -13,7 +13,8 @@ const styles = StyleSheet.create({
     img: {
         width: 56,
         height: 56,
-        objectFit: 'cover'
+        objectFit: 'cover',
+        borderRadius: 8
     },
     titleTint: {
         color: BaseColors.secondary
