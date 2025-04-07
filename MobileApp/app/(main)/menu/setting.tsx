@@ -13,10 +13,12 @@ export default function SettingsScreen() {
     const check = colorScheme ?? "light";
     const router = useRouter();
     return (
-        <KeyboardAwareSafeScreen style={Container.base}>
-            <Text style={[styles.header, { color: Colors[check].text }, Fonts.h1Large]}>
-                Settings
-            </Text>
+        <KeyboardAwareSafeScreen style={[
+            Container.base,
+            { backgroundColor: Colors[check].background },
+            { paddingTop: 0 },
+            
+            ]}>
             <Text style={[styles.sectionTitle,{ color: Colors[check].text }, Fonts.h2]}>Appearance</Text>
             <SettingAppearance />
             

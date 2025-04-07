@@ -4,7 +4,6 @@ import { ImageBackground, Platform } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Ionicons } from '@expo/vector-icons';
-import SharedAssets from '@/shared/SharedAssets';
 
 
 export default function TabLayout() {
@@ -57,13 +56,13 @@ export default function TabLayout() {
       }}
       />
       <Tabs.Screen
-      name="usermenu"
+      name="menu"
       options={{
         tabBarIcon: ({ color }) => <Ionicons size={iconSize} name="menu" color={color} />,
       }}
       />
       <Tabs.Screen
-      name="setting"
+      name="chatbot"
       options={{
         href: null,
         tabBarIcon: ({ color }) => <Ionicons size={iconSize} name="menu" color={color} />,

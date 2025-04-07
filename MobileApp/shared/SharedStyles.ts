@@ -71,12 +71,12 @@ export const Container = StyleSheet.create({
     flex: 1,
     display: "flex",
     paddingHorizontal: 16,
-    paddingTop: 54,
+    paddingVertical: 54,
   },
   baseContent: {
     justifyContent: "center",
     alignItems: "center",
-    gap: 16,
+    gap: 8,
   },
   title: {
     textAlign: "left",
