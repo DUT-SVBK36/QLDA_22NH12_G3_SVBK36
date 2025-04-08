@@ -7,7 +7,8 @@ export const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         borderRightWidth: 1,
-        borderRightColor: "#FD87EA"
+        borderRightColor: "#FD87EA",
+        marginBottom: 12,
     },
     avatar: {
         width: 50,

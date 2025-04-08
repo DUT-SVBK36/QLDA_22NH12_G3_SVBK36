@@ -4,6 +4,8 @@ import { styles } from "./style.css";
 import { Colors } from "@/constants/Colors";
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { Fonts } from "@/shared/SharedStyles";
+
 const MenuUser = () => {
     const colorScheme = useColorScheme();
     const check = colorScheme ?? "light";
@@ -17,11 +19,10 @@ const MenuUser = () => {
                 resizeMode="cover"
             />
             <View style={styles.userInfo}>
-                <Text style={[styles.username, textColor]}>UserName</Text>
+                <Text style={[styles.username, textColor, Fonts.subtitle]}>UserName</Text>
                 <View style={styles.badge}>
-                <Text style={styles.badgetext}>Beginner</Text>
+                    <Text style={[styles.badgetext, Fonts.caption]}>Beginner</Text>
                 </View>
-                
             </View>
             <View style={styles.rightContainer}>
                 <FontAwesomeIcon 
