@@ -20,8 +20,17 @@ class PostureMonitor:
         if len(self.posture_history) > self.max_history:
             self.posture_history.pop(0)
         
-        # Kiểm tra tư thế
-        if posture != "straight_back" and posture != "vai_thang":  # Giả sử straight_back và vai_thang là tư thế tốt
+        # Kiểm tra tư thế với hỗ trợ cho phân loại mới
+        is_good_posture = (
+            # Our simplified good postures
+            "right" in posture or 
+            "correct" in posture or
+            posture == "posture" or  # Generic good posture
+            posture.startswith("good_")  # Keep backward compatibility with good_ prefix
+        )
+        
+        # Nếu tư thế không tốt
+        if not is_good_posture:  
             # Bắt đầu tính thời gian tư thế xấu
             if self.bad_posture_start is None:
                 self.bad_posture_start = current_time
