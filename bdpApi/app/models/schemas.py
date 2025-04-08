@@ -3,6 +3,7 @@ from typing import Dict, List, Any, Optional
 
 class CameraRequest(BaseModel):
     camera_id: int = 0
+    camera_url: Optional[str] = None
 
 class ApiResponse(BaseModel):
     success: bool
@@ -32,3 +33,4 @@ class WebSocketMessage(BaseModel):
 class WebSocketCommand(BaseModel):
     action: str
     camera_id: Optional[int] = 0
+    camera_url: Optional[str] = None

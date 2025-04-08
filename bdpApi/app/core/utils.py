@@ -1,6 +1,7 @@
 import numpy as np
 import mediapipe as mp
 from typing import List, Tuple, Dict, Any, Optional
+import cv2
 
 mp_pose = mp.solutions.pose
 
@@ -83,3 +84,68 @@ def extract_features_from_landmarks(landmarks: List) -> List[float]:
         features.extend([0, 0, 0, 0, 0])
     
     return features
+
+# Functions from detect_posture.py for specialized keypoint extraction
+def extract_keypoints(results) -> List[float]:
+    """Extract keypoints from MediaPipe pose results for general purpose use"""
+    keypoints = []
+    if results.pose_landmarks:
+        for landmark in results.pose_landmarks.landmark:
+            keypoints.extend([landmark.x, landmark.y, landmark.z])
+    else:
+        # If no landmarks detected, return zeros
+        keypoints = [0] * (33 * 3)  # 33 landmarks * 3 coordinates
+    
+    return keypoints
+
+def extract_leg_keypoints(results) -> List[float]:
+    """Extract keypoints for leg model (10 keypoints * 3 coordinates = 30 features)"""
+    leg_keypoints_idx = [23, 24, 25, 26, 27, 28, 29, 30, 31, 32]  # Hip to feet
+    leg_keypoints = []
+    
+    for idx in leg_keypoints_idx:
+        if results.pose_landmarks:
+            point = results.pose_landmarks.landmark[idx]
+            leg_keypoints.extend([point.x, point.y, point.z])
+        else:
+            leg_keypoints.extend([0, 0, 0])
+    
+    return leg_keypoints
+
+def extract_neck_keypoints(results) -> List[float]:
+    """Extract keypoints for neck model (11 keypoints * 3 coordinates = 33 features)"""
+    neck_keypoints_idx = list(range(0, 11))  # Head and face points (0-10)
+    neck_keypoints = []
+    
+    for idx in neck_keypoints_idx:
+        if results.pose_landmarks:
+            point = results.pose_landmarks.landmark[idx]
+            neck_keypoints.extend([point.x, point.y, point.z])
+        else:
+            neck_keypoints.extend([0, 0, 0])
+    
+    return neck_keypoints
+
+def extract_posture_keypoints(results) -> List[float]:
+    """Extract keypoints for posture model (12 keypoints * 3 coordinates = 36 features)"""
+    posture_keypoints_idx = list(range(11, 23))  # Shoulders to hips (11-22)
+    posture_keypoints = []
+    
+    for idx in posture_keypoints_idx:
+        if results.pose_landmarks:
+            point = results.pose_landmarks.landmark[idx]
+            posture_keypoints.extend([point.x, point.y, point.z])
+        else:
+            posture_keypoints.extend([0, 0, 0])
+    
+    return posture_keypoints
+
+def get_pose_results(image, pose_model):
+    """Process an image and get MediaPipe pose results"""
+    # Convert the BGR image to RGB
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+    # Process the image and get pose landmarks
+    results = pose_model.process(image_rgb)
+    
+    return results
