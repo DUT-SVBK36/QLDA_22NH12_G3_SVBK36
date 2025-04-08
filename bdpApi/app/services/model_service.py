@@ -3,9 +3,15 @@ import pickle
 import tensorflow as tf
 import numpy as np
 import logging
+import asyncio
+import cv2
+import base64
 from typing import Dict, Tuple, Any, List, Optional
+import mediapipe as mp
+from datetime import datetime
 
 from app.config import MODELS_DIR, logger
+from app.models.schemas import FrameData, PostureInfo
 
 class ModelService:
     def __init__(self):
@@ -209,4 +215,188 @@ class ModelService:
             logger.error(f"Error predicting posture: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            return "unknown", 0.0 
+            return "unknown", 0.0
+
+class PostureDetectionService:
+    def __init__(self, camera_id=0, camera_url=None):
+        self.camera_id = camera_id
+        self.camera_url = camera_url
+        self.model_service = ModelService()
+        self.running = False
+        self.cap = None
+        self.frame_queue = asyncio.Queue(maxsize=10)
+        
+        # MediaPipe setup
+        self.mp_pose = mp.solutions.pose
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.pose = self.mp_pose.Pose(
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
+        )
+        
+        # Start the capture thread
+        self.start()
+    
+    def start(self):
+        """Start the detection service"""
+        if not self.running:
+            logger.info(f"Starting camera capture with camera ID: {self.camera_id}")
+            self.running = True
+            
+            # Xử lý camera dựa trên loại camera
+            if self.camera_id == 1 and not self.camera_url:
+                # Camera WiFi mặc định nếu không cung cấp URL
+                self.camera_url = 'http://192.168.1.10:8080/video'
+                logger.info(f"Using WiFi camera at URL: {self.camera_url}")
+                self.cap = cv2.VideoCapture(self.camera_url)
+            elif self.camera_id == 1 and self.camera_url:
+                # Sử dụng URL camera cụ thể nếu đã cung cấp
+                logger.info(f"Using WiFi camera at custom URL: {self.camera_url}")
+                self.cap = cv2.VideoCapture(self.camera_url)
+            else:
+                # Camera thông thường (webcam)
+                logger.info(f"Using local camera with index: {self.camera_id}")
+                self.cap = cv2.VideoCapture(self.camera_id)
+            
+            # Start the frame processing loop in a separate thread
+            import threading
+            self.capture_thread = threading.Thread(target=self._capture_loop)
+            self.capture_thread.daemon = True
+            self.capture_thread.start()
+    
+    def stop(self):
+        """Stop the detection service"""
+        self.running = False
+        if self.capture_thread and self.capture_thread.is_alive():
+            self.capture_thread.join(timeout=2.0)
+        
+        if self.cap:
+            self.cap.release()
+            self.cap = None
+        
+        # Fix the MediaPipe error by adding a check
+        try:
+            if self.pose and hasattr(self.pose, '_graph') and self.pose._graph is not None:
+                self.pose.close()
+        except Exception as e:
+            logger.error(f"Error closing MediaPipe pose: {str(e)}")
+        
+        logger.info("Posture detection service stopped")
+    
+    def _capture_loop(self):
+        """Background thread loop for capturing and processing frames"""
+        if not self.cap or not self.cap.isOpened():
+            logger.error(f"Failed to open camera with ID: {self.camera_id}")
+            if self.camera_id == 1:
+                logger.error(f"Check if the IP camera URL is correct: {self.camera_url}")
+            return
+        
+        frame_count = 0
+        reconnect_attempts = 0
+        max_reconnect_attempts = 5
+        
+        while self.running:
+            success, frame = self.cap.read()
+            if not success:
+                reconnect_attempts += 1
+                logger.error(f"Failed to read frame from camera (attempt {reconnect_attempts}/{max_reconnect_attempts})")
+                
+                # Nếu là camera WiFi, thử kết nối lại
+                if self.camera_id == 1 and reconnect_attempts < max_reconnect_attempts:
+                    logger.info("Attempting to reconnect to WiFi camera...")
+                    if self.cap:
+                        self.cap.release()
+                    
+                    # Chờ 2 giây trước khi thử lại
+                    import time
+                    time.sleep(2)
+                    
+                    self.cap = cv2.VideoCapture(self.camera_url)
+                    continue
+                elif reconnect_attempts >= max_reconnect_attempts:
+                    logger.error("Maximum reconnection attempts reached. Stopping camera capture.")
+                    break
+                else:
+                    break
+            
+            # Reset reconnect counter on successful frame capture
+            reconnect_attempts = 0
+            
+            # Skip frames to reduce CPU usage (process every 3rd frame)
+            frame_count += 1
+            if frame_count % 3 != 0:
+                continue
+            
+            try:
+                # Convert BGR to RGB
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                
+                # Process the frame with MediaPipe
+                results = self.pose.process(rgb_frame)
+                
+                # Draw pose landmarks on the frame
+                annotated_frame = frame.copy()
+                if results.pose_landmarks:
+                    self.mp_drawing.draw_landmarks(
+                        annotated_frame, 
+                        results.pose_landmarks, 
+                        self.mp_pose.POSE_CONNECTIONS
+                    )
+                
+                # Get posture prediction
+                posture_class, confidence = self.model_service.predict_posture(results=results)
+                
+                # Convert frame to base64 for transmission
+                _, buffer = cv2.imencode('.jpg', annotated_frame)
+                base64_image = f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
+                
+                # Determine if this posture needs an alert (anything not 'good_')
+                needs_alert = not posture_class.startswith("good_")
+                
+                # Prepare the frame data
+                posture_info = PostureInfo(
+                    posture=posture_class,
+                    confidence=float(confidence),
+                    need_alert=needs_alert
+                )
+                
+                frame_data = FrameData(
+                    image=base64_image,
+                    posture=posture_info,
+                    timestamp=datetime.now().isoformat()
+                )
+                
+                # Put the processed frame in the queue
+                try:
+                    # Use put_nowait to avoid blocking
+                    self.frame_queue.put_nowait(frame_data)
+                except asyncio.QueueFull:
+                    # If queue is full, remove oldest item and add new one
+                    try:
+                        self.frame_queue.get_nowait()
+                        self.frame_queue.put_nowait(frame_data)
+                    except Exception:
+                        pass
+                
+            except Exception as e:
+                logger.error(f"Error processing frame: {str(e)}")
+            
+            # Sleep a bit to control the frame rate
+            import time
+            time.sleep(0.05)
+    
+    async def get_next_frame(self):
+        """Get the next processed frame as a FrameData object"""
+        if not self.running:
+            return None
+        
+        try:
+            # Wait for the next frame with a timeout
+            frame_data = await asyncio.wait_for(self.frame_queue.get(), timeout=5.0)
+            return frame_data
+        except asyncio.TimeoutError:
+            logger.warning("Timeout waiting for next frame")
+            return None
+        except Exception as e:
+            logger.error(f"Error getting next frame: {str(e)}")
+            return None 
