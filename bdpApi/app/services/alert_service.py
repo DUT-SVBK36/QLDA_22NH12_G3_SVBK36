@@ -15,12 +15,35 @@ class AlertService:
     def play_alert_sound(self, sound_name: str = "alert.mp3") -> None:
         """Phát âm thanh cảnh báo"""
         try:
-            alert_sound_path = os.path.join(AUDIO_ALERTS_DIR, sound_name)
+            # Map the model output posture names to our simplified alert names
+            if "leg" in sound_name or sound_name.startswith("leg_"):
+                if "right" in sound_name or "correct" in sound_name:
+                    base_sound = "leg_right.mp3"
+                else:
+                    base_sound = "leg_wrong.mp3"
+            elif "neck" in sound_name or sound_name.startswith("neck_"):
+                if "right" in sound_name or "correct" in sound_name:
+                    base_sound = "neck_right.mp3"
+                else:
+                    base_sound = "neck_wrong.mp3"
+            elif "forward" in sound_name or "forward_head" in sound_name:
+                base_sound = "bad_sitting_forward.mp3"
+            elif "backward" in sound_name or "leaning_backward" in sound_name:
+                base_sound = "bad_sitting_backward.mp3"
+            elif "left" in sound_name or "nghieng_sang_trai" in sound_name:
+                base_sound = "lean_left.mp3"
+            elif "right" in sound_name or "nghieng_sang_phai" in sound_name:
+                base_sound = "lean_right.mp3"
+            else:
+                # Default generic posture alert
+                base_sound = "posture.mp3"
+            
+            alert_sound_path = os.path.join(AUDIO_ALERTS_DIR, base_sound)
             
             # Nếu không tìm thấy file âm thanh, sử dụng âm thanh mặc định
             if not os.path.exists(alert_sound_path):
                 logger.warning(f"Không tìm thấy file âm thanh: {alert_sound_path}")
-                alert_sound_path = os.path.join(AUDIO_ALERTS_DIR, "alert.mp3")
+                alert_sound_path = os.path.join(AUDIO_ALERTS_DIR, "posture.mp3")
                 
                 if not os.path.exists(alert_sound_path):
                     logger.warning("Không tìm thấy file âm thanh mặc định")

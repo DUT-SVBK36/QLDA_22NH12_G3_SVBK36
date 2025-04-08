@@ -113,13 +113,12 @@ class CameraState:
             }
             
             if results.pose_landmarks:
+                # Vẽ landmark trên frame
+                mp_drawing.draw_landmarks(
+                    display_frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
                 
-                
-                # Trích xuất đặc trưng
-                features = extract_features_from_landmarks(results.pose_landmarks.landmark)
-                
-                # Dự đoán tư thế
-                predicted_class, confidence = self.model_service.predict_posture(features)
+                # Sử dụng phương pháp dự đoán mới (truyền trực tiếp kết quả MediaPipe)
+                predicted_class, confidence = self.model_service.predict_posture(results=results)
                 
                 if predicted_class:
                     # Thêm dự đoán vào danh sách gần đây
@@ -136,8 +135,9 @@ class CameraState:
                         posture_info["confidence"] = confidence
                         posture_info["posture_vi"] = POSTURE_NAMES_VI.get(smoothed_class, smoothed_class)
                         
-                        # Lấy thông tin góc
+                        # Lấy góc từ extract_features_from_landmarks (cho tương thích ngược)
                         try:
+                            features = extract_features_from_landmarks(results.pose_landmarks.landmark)
                             back_angle = features[-5]  # Vị trí của góc lưng trong danh sách đặc trưng
                             neck_angle = features[-4]  # Vị trí của góc cổ trong danh sách đặc trưng
                             posture_info["angles"] = {
