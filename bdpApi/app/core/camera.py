@@ -7,7 +7,8 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 from collections import Counter
 import queue
-
+import requests
+from app.api.endpoints.esp_audio import esp_devices
 from app.core.utils import extract_features_from_landmarks
 from app.core.posture_monitor import PostureMonitor
 from app.services.model_service import ModelService
@@ -77,7 +78,7 @@ class CameraState:
             logger.error(f"Lỗi khi dừng camera: {e}")
             return False
     
-    def process_frame(self) -> bool:
+    def process_frame(self):
         """Xử lý một frame từ camera"""
         try:
             current_time = time.time()
@@ -113,13 +114,12 @@ class CameraState:
             }
             
             if results.pose_landmarks:
+                # Vẽ landmark trên frame
+                mp_drawing.draw_landmarks(
+                    display_frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
                 
-                
-                # Trích xuất đặc trưng
-                features = extract_features_from_landmarks(results.pose_landmarks.landmark)
-                
-                # Dự đoán tư thế
-                predicted_class, confidence = self.model_service.predict_posture(features)
+                # Sử dụng phương pháp dự đoán mới (truyền trực tiếp kết quả MediaPipe)
+                predicted_class, confidence = self.model_service.predict_posture(results=results)
                 
                 if predicted_class:
                     # Thêm dự đoán vào danh sách gần đây
@@ -136,8 +136,9 @@ class CameraState:
                         posture_info["confidence"] = confidence
                         posture_info["posture_vi"] = POSTURE_NAMES_VI.get(smoothed_class, smoothed_class)
                         
-                        # Lấy thông tin góc
+                        # Lấy góc từ extract_features_from_landmarks (cho tương thích ngược)
                         try:
+                            features = extract_features_from_landmarks(results.pose_landmarks.landmark)
                             back_angle = features[-5]  # Vị trí của góc lưng trong danh sách đặc trưng
                             neck_angle = features[-4]  # Vị trí của góc cổ trong danh sách đặc trưng
                             posture_info["angles"] = {
@@ -153,70 +154,116 @@ class CameraState:
                         
                         # Hiển thị thông tin trên frame
                         
-                        
                         # Nếu cần cảnh báo
                         if need_alert:
-                            
-                            
                             # Phát âm thanh cảnh báo
                             alert_sound_file = f"{smoothed_class}.mp3"
                             self.alert_service.play_alert_sound(alert_sound_file)
                             
                             # Lưu ảnh chụp
                             self.alert_service.save_screenshot(display_frame, smoothed_class)
-            
-            # Chỉ gửi ảnh mỗi 2 giây hoặc khi có cảnh báo
-            should_send_image =  posture_info["need_alert"]
-            
-            if should_send_image:
-                self.last_image_send_time = current_time
+                            
+                            # Gửi cảnh báo đến ESP CAM nếu có thiết bị đăng ký
+                            self._send_alert_to_esp_devices(smoothed_class)
                 
-                # Giảm kích thước ảnh để tối ưu hóa băng thông
-                scale_percent = 50  # Giảm kích thước xuống 50%
-                width = int(display_frame.shape[1] * scale_percent / 100)
-                height = int(display_frame.shape[0] * scale_percent / 100)
-                dim = (width, height)
-                resized_frame = cv2.resize(display_frame, dim, interpolation=cv2.INTER_AREA)
+                # Chỉ gửi ảnh mỗi 2 giây hoặc khi có cảnh báo
+                should_send_image = posture_info["need_alert"]
                 
-                # Chuyển đổi sang JPEG và sau đó thành base64
-                _, buffer = cv2.imencode('.jpg', resized_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-                jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+                if should_send_image:
+                    self.last_image_send_time = current_time
+                    
+                    # Giảm kích thước ảnh để tối ưu hóa băng thông
+                    scale_percent = 50  # Giảm kích thước xuống 50%
+                    width = int(display_frame.shape[1] * scale_percent / 100)
+                    height = int(display_frame.shape[0] * scale_percent / 100)
+                    dim = (width, height)
+                    resized_frame = cv2.resize(display_frame, dim, interpolation=cv2.INTER_AREA)
+                    
+                    # Chuyển đổi sang JPEG và sau đó thành base64
+                    _, buffer = cv2.imencode('.jpg', resized_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                    jpg_as_text = base64.b64encode(buffer).decode('utf-8')
+                    
+                    # Tạo message để gửi qua WebSocket
+                    message = {
+                        "type": "frame",
+                        "data": {
+                            "image": jpg_as_text,
+                            "posture": posture_info,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    }
+                    
+                    # Thêm vào queue để gửi trong event loop chính
+                    self.message_queue.put(message)
                 
-                # Tạo message để gửi qua WebSocket
-                message = {
-                    "type": "frame",
+                # Gửi thông tin tư thế mỗi khi xử lý frame (không cần gửi ảnh)
+                posture_message = {
+                    "type": "posture_update",
                     "data": {
-                        "image": jpg_as_text,
                         "posture": posture_info,
                         "timestamp": datetime.now().isoformat()
                     }
                 }
+                self.message_queue.put(posture_message)
                 
-                # Thêm vào queue để gửi trong event loop chính
-                self.message_queue.put(message)
-            
-            # Gửi thông tin tư thế mỗi khi xử lý frame (không cần gửi ảnh)
-            posture_message = {
-                "type": "posture_update",
-                "data": {
-                    "posture": posture_info,
-                    "timestamp": datetime.now().isoformat()
-                }
-            }
-            self.message_queue.put(posture_message)
-            
-            # Nếu cần thống kê, gửi thống kê mỗi 5 giây
-            if int(current_time) % 5 == 0 and current_time - int(current_time) < 0.1:  # Mỗi 5 giây
-                stats = self.monitor.get_statistics()
-                stats_message = {
-                    "type": "statistics",
-                    "data": stats
-                }
-                self.message_queue.put(stats_message)
-            
-            return True
-            
+                # Nếu cần thống kê, gửi thống kê mỗi 5 giây
+                if int(current_time) % 5 == 0 and current_time - int(current_time) < 0.1:  # Mỗi 5 giây
+                    stats = self.monitor.get_statistics()
+                    stats_message = {
+                        "type": "statistics",
+                        "data": stats
+                    }
+                    self.message_queue.put(stats_message)
+                
+                return True
+                
         except Exception as e:
             logger.error(f"Lỗi trong quá trình xử lý frame: {e}")
             return False
+
+    def _send_alert_to_esp_devices(self, posture_class):
+        """Gửi cảnh báo đến các thiết bị ESP đã đăng ký"""
+        try:
+            # Map tư thế sang file âm thanh tương ứng
+            posture_audio_map = {
+                "bad_sitting_forward": "bad_sitting_forward.mp3",
+                "bad_sitting_backward": "bad_sitting_backward.mp3",
+                "leaning_left_side": "lean_left.mp3",
+                "leaning_right_side": "lean_right.mp3",
+                "neck_wrong": "neck_wrong.mp3",
+                "leg_wrong": "leg_wrong.mp3"
+            }
+            
+            # Xác định file âm thanh
+            if "forward" in posture_class:
+                audio_file = "bad_sitting_forward.mp3"
+            elif "backward" in posture_class:
+                audio_file = "bad_sitting_backward.mp3"
+            elif "left" in posture_class:
+                audio_file = "lean_left.mp3"
+            elif "right" in posture_class and not "leg" in posture_class:
+                audio_file = "lean_right.mp3"
+            elif "neck" in posture_class and not "right" in posture_class:
+                audio_file = "neck_wrong.mp3"
+            elif "leg" in posture_class and not "right" in posture_class:
+                audio_file = "leg_wrong.mp3"
+            else:
+                audio_file = "posture.mp3"
+            
+            # Gửi lệnh đến tất cả thiết bị ESP đang kết nối
+            for device_id, device_info in esp_devices.items():
+                if device_info.get("status") == "connected":
+                    ip_address = device_info["ip_address"]
+                    
+                    try:
+                        # Gửi lệnh phát âm thanh đến ESP
+                        payload = {"action": "play_audio", "file": audio_file}
+                        requests.post(f"http://{ip_address}/command", json=payload, timeout=1)
+                        
+                    except Exception as e:
+                        logger.error(f"Lỗi khi gửi cảnh báo đến ESP {device_id}: {str(e)}")
+                        
+        except Exception as e:
+            logger.error(f"Lỗi trong quá trình gửi cảnh báo đến ESP: {str(e)}")
+
 
