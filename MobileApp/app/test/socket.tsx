@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { BaseColors } from "@/constants/Colors";
 import { Fonts } from "@/shared/SharedStyles";
+import { AuthService } from "@/services/auth";
 
 // Sample event types to test
 const EVENT_TYPES = [
@@ -28,7 +29,8 @@ export default function SocketTestScreen() {
     const [logs, setLogs] = useState<Array<{type: string; message: string; timestamp: string}>>([]);
     const [customEvent, setCustomEvent] = useState('custom-event');
     const [customPayload, setCustomPayload] = useState('{"message": "Hello world"}');
-    
+    const [clientId, setClientId] = useState('');
+    const [token, setToken] = useState('');
     // Add log entry with timestamp
     const addLog = (type: string, message: string) => {
       const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
@@ -40,6 +42,15 @@ export default function SocketTestScreen() {
     
     // Initialize event listeners
     useEffect(() => {
+      const client_id = AuthService.getUser() || '';
+      const token = AuthService.getToken();
+      
+      Promise.all([client_id, token]).then(res => {
+        const [client_id, token] = res;
+        setClientId(client_id.id);
+        setToken(token as string);
+      })
+      
       if (!socket) return;
       
       const handleEvent = (eventName: string) => (data: any) => {
@@ -87,8 +98,8 @@ export default function SocketTestScreen() {
       try {
         const data = payload ? JSON.parse(payload) : "Hello world";
         console.log(JSON.stringify(data));
-        socket.emit(eventName, data);
-        addLog('emit', `Emitted "${eventName}" with payload: ${payload || '{}'}`);
+        socket.emit(data);
+        addLog('emit', `Emitted with payload: ${payload || '{}'}`);
       } catch (err: any) {
         addLog('error', `Failed to emit: ${err.message}`);
       }
@@ -97,7 +108,7 @@ export default function SocketTestScreen() {
     // Handle reconnection
     const handleReconnect = () => {
       try {
-        connect(); // Use the context method instead
+        connect(clientId, token); // Use the context method instead
         addLog('system', 'Attempting to reconnect...');
       } catch (error: any) {
         addLog('error', `Reconnection error: ${error.message}`);
@@ -133,7 +144,7 @@ export default function SocketTestScreen() {
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[styles.button, isConnected ? styles.disconnectButton : styles.connectButton]}
-                onPress={() => isConnected ? disconnect() : connect()}
+                onPress={() => isConnected ? disconnect() : connect(clientId, token)}
               >
                 <Text style={styles.buttonText}>
                   {isConnected ? 'Disconnect' : 'Connect'}
@@ -155,7 +166,7 @@ export default function SocketTestScreen() {
                       client: 'mobile',
                       timestamp: new Date().toISOString()
                     };
-                    socket.emit('message', detectMessage);
+                    socket.emit(detectMessage);
                     addLog('emit', 'Started detection');
                   }
                 }}
@@ -172,7 +183,7 @@ export default function SocketTestScreen() {
                       client: 'mobile',
                       timestamp: new Date().toISOString()
                     };
-                    socket.emit('message', stopMessage);
+                    socket.emit(stopMessage);
                     addLog('emit', 'Stopped detection');
                   }
                 }}

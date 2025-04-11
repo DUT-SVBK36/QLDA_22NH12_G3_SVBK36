@@ -41,6 +41,12 @@ export default function MenuLayout() {
                     headerShown: false,
                 }}
             />
+            <Stack.Screen
+                name="session"
+                options={{
+                    headerShown: false,
+                }}
+            />
         </Stack>
     );
 }

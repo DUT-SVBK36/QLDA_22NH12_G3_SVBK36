@@ -3,6 +3,7 @@ import styles from "./styles.css";
 import { Fonts } from "@/shared/SharedStyles";
 import { FontAwesome5 } from "@expo/vector-icons";
 import config from "@/constants/config";
+import { useState } from "react";
 
 interface WrongPostureCardProps {
     id?: string;
@@ -25,17 +26,27 @@ export default function WrongPostureCard(
         timestamp = new Date().toLocaleString("vi-VN", { hour12: false })
     }: WrongPostureCardProps
 ) {
+    const [isExpanded, setIsExpanded] = useState(false);
     return (
         <>
             <TouchableOpacity style={[
                 styles.container
-            ]}>
+            ]}
+            onPress={() => {
+                setIsExpanded(!isExpanded);
+            }}
+            >
                 <Image
                     source={{
-                        uri: `data:image/jpeg;base64,${image}`
+                        uri: `${image}`
                     }}
                     style={[
-                        styles.img
+                        styles.img,
+                        isExpanded && {
+                            flex: 1,
+                            height: "100%",
+                            objectFit: "cover",
+                        }
                     ]}
                 />
                 <View style={[

@@ -1,26 +1,27 @@
-import config from '@/constants/config';
+import config from "@/constants/config";
 
 let socket: WebSocket | null = null;
 let eventHandlers: Map<string, Set<Function>> = new Map();
 
-export const initSocket = (): WebSocket => {
+export const initSocket = (client_id: string, token: string): WebSocket => {
   if (!socket || socket.readyState === WebSocket.CLOSED) {
     try {
-      socket = new WebSocket(config.SOCKET_URL);
-      
+      const socketClient = `${config.SOCKET_URL}?client_id=${client_id}&token=${token}`;
+      socket = new WebSocket(socketClient);
+
       socket.onopen = () => {
-        console.log('WebSocket connected');
-        triggerEvent('connect');
+        console.log("WebSocket connected");
+        triggerEvent("connect");
       };
 
       socket.onclose = () => {
-        console.log('WebSocket disconnected');
-        triggerEvent('disconnect');
+        console.log("WebSocket disconnected");
+        triggerEvent("disconnect");
       };
 
       socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        triggerEvent('error', error);
+        console.error("WebSocket error:", error);
+        triggerEvent("error", error);
       };
 
       socket.onmessage = (event) => {
@@ -29,12 +30,12 @@ export const initSocket = (): WebSocket => {
           const eventType = data.type;
           triggerEvent(eventType, data.data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-          triggerEvent('message', event.data);
+          console.error("Error parsing WebSocket message:", error);
+          triggerEvent("message", event.data);
         }
       };
     } catch (error) {
-      console.error('Failed to create WebSocket:', error);
+      console.error("Failed to create WebSocket:", error);
       throw error;
     }
   }
@@ -60,7 +61,7 @@ export const on = (event: string, callback: Function): void => {
 
 export const off = (event: string, callback?: Function): void => {
   if (!eventHandlers.has(event)) return;
-  
+
   if (callback) {
     eventHandlers.get(event)?.delete(callback);
   } else {
@@ -68,25 +69,22 @@ export const off = (event: string, callback?: Function): void => {
   }
 };
 
-export const emit = (event: string, data?: any): void => {
+export const emit = (data?: any): void => {
   if (!socket || socket.readyState !== WebSocket.OPEN) {
-    console.error('Cannot emit event: WebSocket not connected');
+    console.error("Cannot emit event: WebSocket not connected");
     return;
   }
 
-  const message = JSON.stringify({
-    type: event,
-    payload: data || {}
-  });
-  
+  const message = JSON.stringify(data);
+
   socket.send(message);
 };
 
 // Helper to trigger events on our handlers
 const triggerEvent = (event: string, data?: any): void => {
   if (!eventHandlers.has(event)) return;
-  
-  eventHandlers.get(event)?.forEach(callback => {
+
+  eventHandlers.get(event)?.forEach((callback) => {
     try {
       callback(data);
     } catch (error) {

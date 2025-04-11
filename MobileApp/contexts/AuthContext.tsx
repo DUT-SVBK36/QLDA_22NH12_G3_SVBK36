@@ -1,71 +1,80 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthService } from '@/services/auth';
 
 interface AuthContextType {
-  user: any | null;
-  token: string | null;
   isAuthenticated: boolean;
-  login: (token: string, user: any) => Promise<void>;
-  logout: () => Promise<void>;
+  user: any | null;
   loading: boolean;
+  login: (username: string, password: string) => Promise<boolean>;
+  register: (username: string, email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
+    const checkAuthStatus = async () => {
+      try {
+        const authenticated = await AuthService.isAuthenticated();
+        setIsAuthenticated(authenticated);
+        
+        if (authenticated) {
+          const userData = await AuthService.getUser();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Auth status check error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      const user = await AuthService.getUser();
-      const token = await AuthService.getToken();
-      setUser(user);
-      setToken(token);
-    } catch (error) {
-      console.error('Error checking auth:', error);
-    } finally {
-      setLoading(false);
+  const login = async (username: string, password: string) => {
+    const success = await AuthService.login(username, password);
+    if (success) {
+      const userData = await AuthService.getUser();
+      setUser(userData);
+      setIsAuthenticated(true);
     }
+    return success;
   };
 
-  const login = async (token: string, user: any) => {
-    try {
-      await AuthService.setAuth(token, user);
-      setUser(user);
-      setToken(token);
-    } catch (error) {
-      console.error('Login error:', error);
+  const register = async (username: string, email: string, password: string) => {
+    const success = await AuthService.register(username, email, password);
+    if (success) {
+      const userData = await AuthService.getUser();
+      setUser(userData);
+      setIsAuthenticated(true);
     }
+    return success;
   };
 
   const logout = async () => {
-    try {
-      await AuthService.removeAuth();
-      setUser(null);
-      setToken(null);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    await AuthService.removeAuth();
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
   const value = {
+    isAuthenticated,
     user,
-    token,
-    isAuthenticated: !!token,
+    loading,
     login,
+    register,
     logout,
-    loading
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

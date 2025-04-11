@@ -181,13 +181,13 @@ class ModelService:
                             return current_posture, float(posture_probs[max_posture_idx])
                         else:
                             # Neck is incorrect
-                            return "neck_" + self.neck_classes[max_neck_idx], float(neck_probs[max_neck_idx])
+                            return self.neck_classes[max_neck_idx], float(neck_probs[max_neck_idx])
                     else:
                         # Posture is incorrect
                         return current_posture, float(posture_probs[max_posture_idx])
                 else:
                     # Leg position is incorrect
-                    return "leg_" + self.leg_classes[1], float(leg_prob)
+                    return self.leg_classes[1], float(leg_prob)
             
             # Legacy support for old feature-based prediction
             elif features:
@@ -246,7 +246,7 @@ class PostureDetectionService:
             # Xử lý camera dựa trên loại camera
             if self.camera_id == 1 and not self.camera_url:
                 # Camera WiFi mặc định nếu không cung cấp URL
-                self.camera_url = 'http://192.168.1.10:8080/video'
+                self.camera_url = 'http://192.168.8.3:81/stream'
                 logger.info(f"Using WiFi camera at URL: {self.camera_url}")
                 self.cap = cv2.VideoCapture(self.camera_url)
             elif self.camera_id == 1 and self.camera_url:

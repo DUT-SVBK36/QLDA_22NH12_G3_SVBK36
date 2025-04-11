@@ -10,6 +10,7 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SocketProvider } from '@/contexts/DetectContext';
 import AuthProvider from '@/components/ui/AuthProvider';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -41,12 +42,12 @@ export default function RootLayout() {
     return (
         <Stack>
           <Stack.Screen name="loading" options={{ headerShown: false }} />
-          <Stack.Screen name="(main)" options={{ headerShown: false }} />
           <Stack.Screen name='login/index' options={{ headerShown: false }} />
           <Stack.Screen name='register/index' options={{ headerShown: false }} />
-          <Stack.Screen name='test' options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
           <Stack.Screen name="language/index" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="(main)" options={{ headerShown: false }} />
+          <Stack.Screen name='test' options={{ headerShown: false }} />
         </Stack>
     )
   });

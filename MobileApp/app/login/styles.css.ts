@@ -7,10 +7,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 56,
     paddingBottom: 32,
-
   },
   languageContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 16,
     right: 16,
     zIndex: 1,
@@ -19,8 +18,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   formContainer: {
-    justifyContent: 'center',
-    width: '100%',
+    justifyContent: "center",
+    width: "100%",
     marginBottom: 40,
   },
   title: {
@@ -32,16 +31,17 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   registerContainer: {
-    marginTop: 'auto',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
+    marginTop: "auto",
+    flexDirection: "row",
+    justifyContent: "center",
+    width: "100%",
+    paddingVertical: 16,
   },
   registerText: {
-    fontFamily: 'Lexend',
+    fontFamily: "Lexend",
   },
   registerLink: {
-    fontFamily: 'Lexend',
+    fontFamily: "Lexend",
   },
 });
 

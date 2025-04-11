@@ -1,21 +1,22 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { initSocket, disconnectSocket, on, off, emit } from '@/services/detect/detectSocket';
 import setupEventListeners from '@/services/detect/detectEvent';
+import { AuthService } from '@/services/auth';
 
 interface WebSocketWrapper {
   on: (event: string, callback: Function) => void;
   off: (event: string, callback?: Function) => void;
-  emit: (event: string, data?: any) => void;
-  connect: () => void;
+  emit: (data?: any) => void;
+  connect: (client_id: string, token: string) => void;
   disconnect: () => void;
 }
 
 interface SocketContextType {
   socket: WebSocketWrapper | null;
   isConnected: boolean;
-  connect: () => void;
+  connect: (client_id: string, token: string) => void;
   disconnect: () => void;
-  emit: (event: string, data?: any) => void;
+  emit: (data?: any) => void;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -28,9 +29,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [socket, setSocket] = useState<WebSocketWrapper | null>(null);
 
-  const connect = () => {
+  const connect = (client_id: string, token: string) => {
     try {
-      initSocket();
+      initSocket(client_id, token);
       // Socket connection status is handled by event listeners
     } catch (error) {
       console.error('Failed to connect WebSocket:', error);
@@ -48,7 +49,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       off,
       emit,
       connect,
-      disconnect
+      disconnect,
     };
     
     setSocket(socketWrapper);
@@ -64,7 +65,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     on('disconnect', handleDisconnect);
     
     // Initial connection attempt
-    connect();
     
     return () => {
       off('connect', handleConnect);

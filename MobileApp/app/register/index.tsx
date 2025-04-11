@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, useColorScheme, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import CustomInput from '@/components/ui/CustomInput';
@@ -8,18 +8,80 @@ import CustomButton from '@/components/ui/CustomButton';
 import { Fonts } from '@/shared/SharedStyles';
 import KeyboardAwareSafeScreen from '@/components/layout/KeyboardAwareSafeScreen';
 import { Colors } from '@/constants/Colors';
+import { AuthService } from '@/services/auth';
 
+interface RegisterregisterForm {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
 export default function Register() {
-  const [registerForm, setRegisterForm] = useState({
+  const [registerForm, setRegisterForm] = useState<RegisterregisterForm>({
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
+    confirmPassword: ''
   });
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const colorScheme = useColorScheme();
   const textColor = Colors[colorScheme ?? "light"].text;
   const tintColor = Colors[colorScheme ?? "light"].tint;
+
+  const validateForm = (): boolean => {
+    if (!registerForm.username.trim()) {
+      setError('Please enter a username');
+      return false;
+    }
+
+    if (!registerForm.email.trim() || !registerForm.email.includes('@')) {
+      setError('Please enter a valid email');
+      return false;
+    }
+
+    if (!registerForm.password.trim() || registerForm.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+
+    if (registerForm.password !== registerForm.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+
+    setError('');
+    return true;
+  };
+
+  const handleInputChange = (field: keyof RegisterregisterForm, value: string) => {
+    setRegisterForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleRegister = async (): Promise<void> => {
+    if (!validateForm()) return;
+
+    try {
+      setLoading(true);
+      const success = await AuthService.register(
+        registerForm.username,
+        registerForm.email,
+        registerForm.password
+      );
+
+      if (success) {
+        Alert.alert('Success', 'Registration successful');
+        router.replace('/login');
+      } else {
+        setError('Registration failed. Please try again.');
+      }
+    } catch (error) {
+      setError('An error occurred during registration');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <KeyboardAwareSafeScreen
       statusBarStyle="light"
@@ -71,9 +133,10 @@ export default function Register() {
           isPassword
         />
 
-        <CustomButton 
-          label="Register"
-          onPress={() => alert('register')}
+        <CustomButton
+          label={loading ? 'Registering...' : 'Register'}
+          onPress={handleRegister}
+          variant='default'
         />
       </View>
 
