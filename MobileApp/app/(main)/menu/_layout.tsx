@@ -47,6 +47,15 @@ export default function MenuLayout() {
                     headerShown: false,
                 }}
             />
+            
+            {/* session-item?id=<id> */}
+            <Stack.Screen
+                name="session-item"
+                options={{
+                    headerShown: false,
+                    presentation: 'modal',
+                }}
+            />
         </Stack>
     );
 }
