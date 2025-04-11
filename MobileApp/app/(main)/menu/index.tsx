@@ -7,11 +7,12 @@ import { router } from 'expo-router';
 import SafeScrollView from "@/components/layout/SafeScrollView";
 import { Colors } from "@/constants/Colors";
 import { Container, Fonts } from "@/shared/SharedStyles";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function UserMenu() {
   const colorScheme = useColorScheme();
   const check = colorScheme ?? "light";
-
+  const { logout } = useAuth();
   return (
     <ScrollView
         style={[
@@ -48,7 +49,12 @@ export default function UserMenu() {
         />
         <View style={styles.divider} />
         <MenuOption icon="info" label="About us" />
-        <MenuOption icon="log-out" label="Log out" />
+        <MenuOption icon="log-out" label="Log out" 
+          onPress={async () => {
+            await logout();
+            // router.replace('/login');
+          }}
+        />
         <View style={styles.footer}>
           <Image 
             source={SharedAssets.Logo}

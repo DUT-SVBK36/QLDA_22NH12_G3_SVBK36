@@ -1,19 +1,50 @@
-// components/auth/ProtectedRoute.tsx
-import { View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import { router, usePathname } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'expo-router';
+import { BaseColors } from '@/constants/Colors';
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, loading } = useAuth();
-  const router = useRouter();
+  const [shouldRender, setShouldRender] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (!loading) {
+      if (!isAuthenticated) {
+        // Redirect to login if not authenticated
+        router.replace('/login');
+      } else {
+        // User is authenticated, show content
+        setShouldRender(true);
+        
+        // If we're on login or register pages, redirect to main
+        if (pathname.includes('/login') || pathname.includes('/register')) {
+          router.replace('/(main)');
+        }
+      }
+    }
+  }, [isAuthenticated, loading, pathname]);
 
   if (loading) {
-    return <View />;
+    return (
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        backgroundColor: BaseColors.dark_pri 
+      }}>
+        <ActivityIndicator size="large" color={BaseColors.primary} />
+      </View>
+    );
   }
 
-  if (!isAuthenticated) {
-    router.push('/login');
-    return <View />;
+  if (!shouldRender) {
+    return null;
   }
 
   return <>{children}</>;

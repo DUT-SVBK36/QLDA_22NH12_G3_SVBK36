@@ -43,7 +43,7 @@ async def get_user_sessions(
     sessions_collection = await get_sessions_collection()
     
     cursor = sessions_collection.find(
-        {"user_id": current_user.id}
+        {"user_id": ObjectId(current_user.id)}
     ).sort("creation_date", -1).skip(skip).limit(limit)
     
     sessions = []
@@ -55,6 +55,26 @@ async def get_user_sessions(
         ))
     
     return sessions
+
+@router.get("/latest", response_model=SessionResponseModel)
+async def get_latest_session(current_user: UserModel = Depends(get_current_active_user)):
+    """Lấy phiên ghi nhận mới nhất của người dùng hiện tại"""
+    sessions_collection = await get_sessions_collection()
+    
+    # Find the latest session by creation_date for the current user
+    latest_session = await sessions_collection.find_one(
+        {"user_id": ObjectId(current_user.id)},
+        sort=[("creation_date", -1)]  # Sort by creation_date in descending order
+    )
+    
+    if not latest_session:
+        raise HTTPException(status_code=404, detail="Không tìm thấy phiên ghi nhận nào")
+    
+    return SessionResponseModel(
+        _id=str(latest_session["_id"]),
+        user_id=str(latest_session["user_id"]),
+        creation_date=latest_session["creation_date"]
+    )
 
 @router.get("/{session_id}", response_model=SessionDetailModel)
 async def get_session_detail(
@@ -70,7 +90,7 @@ async def get_session_detail(
     
     session = await sessions_collection.find_one({
         "_id": ObjectId(session_id),
-        "user_id": current_user.id
+        "user_id": ObjectId(current_user.id)
     })
     
     if not session:
@@ -102,6 +122,9 @@ async def get_session_detail(
         items=session_items
     )
 
+
+
+
 @router.delete("/{session_id}", response_model=dict)
 async def delete_session(
     session_id: str = Path(...),
@@ -116,7 +139,7 @@ async def delete_session(
     
     session = await sessions_collection.find_one({
         "_id": ObjectId(session_id),
-        "user_id": current_user.id
+        "user_id": ObjectId(current_user.id)
     })
     
     if not session:

@@ -4,6 +4,7 @@ import CustomButton from "../../CustomButton";
 import styles from "./styles.css";
 import { Ionicons } from "@expo/vector-icons";
 import { Fonts } from "@/shared/SharedStyles";
+import { useRouter } from "expo-router";
 
 interface RecentSessionProps {
     timeStamp?: string;
@@ -15,6 +16,7 @@ export default function RecentSession(
         fails = 12,
     }: RecentSessionProps
 ) {
+    const router = useRouter();
   return (
     <>
         <View style={[
@@ -52,7 +54,9 @@ export default function RecentSession(
             </View>
             <CustomButton 
                 label="View history"
-                onPress={() => {}}
+                onPress={() => {
+                    router.push("/(main)/menu/history")
+                }}
                 variant="blue"
             />
         </View>

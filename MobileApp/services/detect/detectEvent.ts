@@ -1,13 +1,6 @@
 import { on } from './detectSocket';
 
-interface PostureDetectionData {
-  client: string;
-  image: string;  // Backend assets path to the image
-  detectedPosture: string;
-  accuracy: number;
-  desc: string;
-  timestamp: string;
-}
+
 
 export default function setupEventListeners(): void {
   on('connect', () => {
