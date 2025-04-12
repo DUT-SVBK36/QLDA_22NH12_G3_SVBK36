@@ -6,7 +6,7 @@ import { useColorScheme } from "react-native";
 export default function TestLayout(){
     const colorScheme = useColorScheme();
     return (
-        <ProtectedRoute>
+        // <ProtectedRoute>
             <Stack
             screenOptions={{
                 headerStyle: {
@@ -25,8 +25,16 @@ export default function TestLayout(){
                         headerShown: true,
                     }}
                 />
+                <Stack.Screen
+                    name="com-test"
+                    options={{
+                        headerShown: true,
+                    }}
+                />
         
             </Stack>
-        </ProtectedRoute>
+
+
+        // </ProtectedRoute>
     )
 }

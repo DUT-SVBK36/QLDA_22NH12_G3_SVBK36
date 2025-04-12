@@ -1,36 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { router, usePathname } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
 import { BaseColors } from '@/constants/Colors';
+import { AuthService } from '@/services/auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, loading } = useAuth();
-  const [shouldRender, setShouldRender] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        // Redirect to login if not authenticated
-        router.replace('/login');
-      } else {
-        // User is authenticated, show content
-        setShouldRender(true);
-        
-        // If we're on login or register pages, redirect to main
-        if (pathname.includes('/login') || pathname.includes('/register')) {
-          router.replace('/(main)');
-        }
-      }
-    }
-  }, [isAuthenticated, loading, pathname]);
+    const checkAuth = async () => {
+      const authStatus = await AuthService.isAuthenticated();
+      setIsAuthenticated(authStatus);
 
-  if (loading) {
+      const isAuthPath = pathname === '/login' || pathname === '/register';
+      
+      if (authStatus && isAuthPath) {
+        router.replace('/(main)');
+        return;
+      }
+
+      if (!authStatus && !isAuthPath && pathname !== '/') {
+        router.replace('/login');
+        return;
+      }
+    };
+
+    checkAuth();
+  }, [pathname]);
+
+  if (isAuthenticated === null) {
     return (
       <View style={{ 
         flex: 1, 
@@ -41,10 +44,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         <ActivityIndicator size="large" color={BaseColors.primary} />
       </View>
     );
-  }
-
-  if (!shouldRender) {
-    return null;
   }
 
   return <>{children}</>;

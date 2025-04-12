@@ -133,7 +133,7 @@ export default function DetectScreen() {
     if (socket && isConnected) {
       const message = {
         action: "start",
-        camera_id: "1",
+        camera_id: "0",
       }
       emit(message);
       console.log('Started detection');
