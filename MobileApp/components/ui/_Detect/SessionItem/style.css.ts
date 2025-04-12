@@ -6,17 +6,19 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: BaseColors.dark_pri,
+    backgroundColor: BaseColors.white,
     borderRadius: 8,
-    marginBottom: 8,
   },
   sessionContent: {
     display: "flex",
     flexDirection: "column",
     gap: 4,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   dateText: {
-    color: BaseColors.white,
+    color: BaseColors.black,
   },
   infoRow: {
     flexDirection: "row",
@@ -24,7 +26,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   infoText: {
-    color: BaseColors.white,
+    color: BaseColors.black,
+  },
+  arrow: {
+    position: "absolute",
+    right: 24,
+    top: 24,
+    color: BaseColors.primary,
   }
 });
 

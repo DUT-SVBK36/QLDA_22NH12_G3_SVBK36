@@ -9,6 +9,7 @@ const api = {
     get: `${config.API_URL}/sessions/`,
     getById: (id: string) => `${config.API_URL}/sessions/${id}`,
     getLatest: `${config.API_URL}/sessions/latest`,
+    getItem: (id: string) => `${config.BASE_URL}/sessions/items/${id}`,
   },
 };
 

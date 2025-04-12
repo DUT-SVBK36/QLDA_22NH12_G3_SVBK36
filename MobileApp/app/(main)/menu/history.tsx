@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Text, View, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { SessionService } from "@/services/sessions";
 import { Session } from "@/models/session.model";
+import { ImageBackground } from "react-native";
+import SharedAssets from "@/shared/SharedAssets";
 import { Container, Fonts } from "@/shared/SharedStyles";
 import { useColorScheme } from "react-native";
-import { Colors } from "@/constants/Colors";
+import { BaseColors, Colors } from "@/constants/Colors";
 import CustomWindow from "@/components/ui/CustomWindow";
 import SessionItem from "@/components/ui/_Detect/SessionItem";
 import { router } from "expo-router";
@@ -90,24 +92,34 @@ export default function History() {
     };
 
     return (
+        <>
+        <ImageBackground 
+                source={SharedAssets.Bg}
+                resizeMode="cover"
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    position: "absolute",
+                }}
+            />
         <View style={[
             Container.base,
-            { backgroundColor: Colors[check].background }
         ]}>
             <Text style={[
                 Container.title,
                 Fonts.h2,
-                { color: Colors[check].text }
+                { color: BaseColors.dark_pri}
             ]}>
                 Session History
             </Text>
 
-            <CustomWindow title="Previous Sessions">
+            <CustomWindow title="Previous Sessions" scrollable={false}>
                 {error ? (
                     <Text style={[Fonts.body, styles.errorText]}>{error}</Text>
                 ) : sessions.length === 0 && !loading ? (
                     <Text style={[Fonts.body, styles.noSessionsText]}>No sessions found</Text>
                 ) : (
+                    //
                     <FlatList
                         data={sessions}
                         renderItem={({ item }) => (
@@ -119,15 +131,19 @@ export default function History() {
                         onEndReachedThreshold={0.5}
                         ListFooterComponent={renderFooter}
                     />
+                    
                 )}
             </CustomWindow>
         </View>
+        </>
+        
     );
 }
 
 const styles = StyleSheet.create({
     listContainer: {
         paddingVertical: 8,
+        backgroundColor: BaseColors.white,
     },
     footer: {
         paddingVertical: 16,

@@ -8,16 +8,17 @@ const styles = StyleSheet.create({
   },
   titleBar: {
     paddingVertical: 8,
-    backgroundColor: BaseColors.dark_pri,
-    paddingLeft: 12,
-    borderTopRightRadius: 5,
-    borderTopStartRadius: 5,
+    backgroundColor: "#FFC0CB",
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
   },
   title: {
-    color: "#fff",
+    color: "black",
+    fontSize: 18,
+    textAlign: "center",
   },
   content: {
-    backgroundColor: BaseColors.dark_blue,
+    backgroundColor: BaseColors.white,
   },
   contentContainer: {
     borderBottomRightRadius: 5,

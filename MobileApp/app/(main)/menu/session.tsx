@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, Image } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, Image, ImageBackground } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Session, SessionItem } from "@/models/session.model";
 import { SessionService } from "@/services/sessions";
 import { Container, Fonts } from "@/shared/SharedStyles";
 import { BaseColors } from "@/constants/Colors";
 import CustomWindow from "@/components/ui/CustomWindow";
+import SharedAssets from "@/shared/SharedAssets";
 
 export default function SessionDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -86,10 +87,20 @@ export default function SessionDetailScreen() {
     const sessionDate = new Date(session.creation_date).toLocaleString();
 
     return (
+        <>
+        <ImageBackground 
+                source={SharedAssets.Bg}
+                resizeMode="cover"
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    position: "absolute",
+                }}
+            />
         <View style={Container.base}>
             <Text style={[Container.title, Fonts.h1]}>Session Detail</Text>
             
-            <CustomWindow title="Session Information">
+            <CustomWindow title="Session Information" scrollable={false}>
                 <Text style={[Fonts.bodySmall, styles.sessionInfo]}>
                     Date: {sessionDate}
                 </Text>
@@ -101,7 +112,7 @@ export default function SessionDetailScreen() {
                 </Text>
             </CustomWindow>
 
-            <CustomWindow title="Posture Items">
+            <CustomWindow title="Posture Items" scrollable={false}>
                 {session.items && session.items.length > 0 ? (
                     <FlatList
                         data={session.items}
@@ -116,6 +127,8 @@ export default function SessionDetailScreen() {
                 )}
             </CustomWindow>
         </View>
+        </>
+        
     );
 }
 
@@ -130,8 +143,10 @@ const styles = StyleSheet.create({
     },
     sessionInfo: {
         paddingLeft: 12,
-        color: BaseColors.white,
+        color: BaseColors.black,
         marginBottom: 8,
+        fontSize: 16,
+        marginTop: 8,
     },
     listContainer: {
         paddingVertical: 8,
@@ -139,38 +154,47 @@ const styles = StyleSheet.create({
     itemContainer: {
         flexDirection: 'row',
         padding: 12,
-        backgroundColor: BaseColors.dark_pri,
+        backgroundColor: BaseColors.white,
         borderRadius: 8,
         marginBottom: 8,
     },
     itemImage: {
-        width: 80,
-        height: 80,
+        width: 120,
+        height: 120,
         borderRadius: 4,
         marginRight: 12,
     },
     itemContent: {
         flex: 1,
         justifyContent: 'center',
+
     },
     itemTitle: {
-        color: BaseColors.white,
+        fontSize: 24,
+        lineHeight: 24,
+        color: BaseColors.black,
         fontWeight: 'bold',
         marginBottom: 4,
     },
     itemTime: {
+        marginTop: 8,
+        fontSize: 16,
+        lineHeight: 18,
         color: "silver",
     },
     itemAccuracy: {
+        marginTop: 8,
+        fontSize: 16,
+        lineHeight: 18,
         color: BaseColors.primary,
     },
     itemRecommendation: {
-        color: BaseColors.white,
+        color: BaseColors.black,
         marginTop: 4,
         fontStyle: 'italic',
     },
     noItemsText: {
-        color: BaseColors.white,
+        color: BaseColors.black,
         textAlign: 'center',
         padding: 16,
     },
