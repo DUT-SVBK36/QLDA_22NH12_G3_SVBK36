@@ -133,6 +133,8 @@ export class AuthService {
   }
 
   static async isAuthenticated(): Promise<boolean> {
-    return !!await this.getToken();
+    const token = await this.getToken();
+    if (!token) return false;
+    return true;
   }
 }

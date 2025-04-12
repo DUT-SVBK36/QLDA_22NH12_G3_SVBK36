@@ -9,6 +9,7 @@ interface CustomWindowProps {
     containerStyle?: ViewStyle;
     contentContainerStyle?: ViewStyle;
     maxHeight?: number;
+    scrollable?: boolean;
 }
 
 export default function CustomWindow(
@@ -17,9 +18,12 @@ export default function CustomWindow(
         children,
         containerStyle,
         contentContainerStyle,
-        maxHeight // Add a maxHeight prop for better control
+        maxHeight, // Add a maxHeight prop for better control
+        scrollable = true
     }: CustomWindowProps
 ) {
+    const ContentWrapper = scrollable ? ScrollView : View;
+
     return (
         <View style={[
             styles.container,
@@ -35,19 +39,19 @@ export default function CustomWindow(
                     {title}
                 </Text>
             </View>
-            <ScrollView 
+            <ContentWrapper 
                 style={[
                     styles.content,
                     maxHeight ? { maxHeight } : null,
                 ]}
-                contentContainerStyle={[
+                contentContainerStyle={scrollable ? [
                     styles.contentContainer,
                     contentContainerStyle,
-                ]}
-                showsVerticalScrollIndicator={true}
+                ] : undefined}
+                showsVerticalScrollIndicator={scrollable}
             >
                 {children}
-            </ScrollView>
+            </ContentWrapper>
         </View>
     );
 }

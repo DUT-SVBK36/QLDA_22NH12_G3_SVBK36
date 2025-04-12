@@ -5,6 +5,8 @@ import { Session } from "@/models/session.model";
 import { Fonts } from "@/shared/SharedStyles";
 import { BaseColors } from "@/constants/Colors";
 import styles from "./style.css";
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 interface SessionItemProps {
     data: Session;
@@ -51,6 +53,12 @@ export default function SessionItem({ data }: SessionItemProps) {
                     </Text>
                 </View>
             </View>
+            <FontAwesomeIcon 
+                icon={faArrowRight} 
+                size={16}
+                color={BaseColors.dark_pri}
+                style={styles.arrow}
+            />
         </TouchableOpacity>
     );
 }
