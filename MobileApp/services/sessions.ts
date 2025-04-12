@@ -8,6 +8,14 @@ import { Session } from "@/models/session.model";
 export interface SessionsResponse {
   sessions: Session[];
 }
+export interface SessionItem {
+  _id: string;
+  timestamp: number;
+  image: string;
+  label_name: string;
+  accuracy: number;
+  label_recommendation?: string;
+}
 
 /**
  * Session service for handling session-related API calls
@@ -135,4 +143,45 @@ export class SessionService {
       throw error;
     }
   }
+  static async getSessionItem(itemId: string): Promise<SessionItem> {
+    try {
+        const token = await AuthService.getToken();
+        if (!token) {
+            throw new Error("Authentication required");
+        }
+
+        // Debug log
+        console.log('Making request to:', api.session.getItem(itemId));
+        console.log('With token:', token);
+
+        const response = await fetch(api.session.getItem(itemId), {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            credentials: 'include'
+        });
+
+        // Debug log
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Error response:', errorData); // Debug log
+            throw new Error(
+                errorData.detail || `Failed to fetch session item: ${response.status}`
+            );
+        }
+
+        const data = await response.json();
+        console.log('Success response:', data); // Debug log
+        return data;
+    } catch (error) {
+        console.error(`Error fetching session item ${itemId}:`, error);
+        throw error;
+    }
+}
+  
 }

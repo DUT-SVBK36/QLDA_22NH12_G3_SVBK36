@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await AuthService.getUser();
       setUser(userData);
       setIsAuthenticated(true);
+      console.log('User logged in:', userData);
     }
     return success;
   };
