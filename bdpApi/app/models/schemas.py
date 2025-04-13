@@ -14,7 +14,7 @@ class PostureInfo(BaseModel):
     posture: str
     posture_vi: Optional[str] = None
     confidence: float
-    need_alert: bool
+    need_alert: bool = False
     angles: Optional[Dict[str, float]] = None
 
 class FrameData(BaseModel):
@@ -34,3 +34,4 @@ class WebSocketCommand(BaseModel):
     action: str
     camera_id: Optional[int] = 0
     camera_url: Optional[str] = None
+    check_alert: Optional[bool] = False

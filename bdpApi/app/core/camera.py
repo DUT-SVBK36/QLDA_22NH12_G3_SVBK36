@@ -156,14 +156,26 @@ class CameraState:
                         
                         # Nếu cần cảnh báo
                         if need_alert:
-                            
-                            
-                            # Phát âm thanh cảnh báo
-                            alert_sound_file = f"{smoothed_class}.mp3"
-                            self.alert_service.play_alert_sound(alert_sound_file)
-                            
-                            # Lưu ảnh chụp
-                            self.alert_service.save_screenshot(display_frame, smoothed_class)
+                            try:
+                                # Kiểm tra thời gian từ cảnh báo cuối cùng
+                                current_time = time.time()
+                                if not hasattr(self, 'last_alert_time') or current_time - self.last_alert_time > 5.0:  # 5 giây cooldown
+                                    # Gửi tên tư thế trực tiếp đến hàm play_alert_sound
+                                    self.alert_service.play_alert_sound(smoothed_class)
+                                    
+                                    # Ghi log để debug
+                                    logger.info(f"Đã gửi cảnh báo âm thanh cho tư thế: {smoothed_class}")
+                                    
+                                    # Lưu ảnh chụp
+                                    screenshot_path = self.alert_service.save_screenshot(display_frame, smoothed_class)
+                                    logger.info(f"Đã lưu ảnh chụp tại: {screenshot_path}")
+                                    
+                                    # Cập nhật thời gian cảnh báo cuối cùng
+                                    self.last_alert_time = current_time
+                            except Exception as e:
+                                logger.error(f"Lỗi khi phát âm thanh cảnh báo: {str(e)}")
+                                import traceback
+                                logger.error(traceback.format_exc())
             
             # Chỉ gửi ảnh mỗi 2 giây hoặc khi có cảnh báo
             should_send_image =  posture_info["need_alert"]

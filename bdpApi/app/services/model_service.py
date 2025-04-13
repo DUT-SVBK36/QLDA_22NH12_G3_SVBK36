@@ -225,7 +225,9 @@ class PostureDetectionService:
         self.running = False
         self.cap = None
         self.frame_queue = asyncio.Queue(maxsize=10)
-        
+        from app.services.alert_service import AlertService
+        self.alert_service = AlertService()
+        self.last_alert_time = None
         # MediaPipe setup
         self.mp_pose = mp.solutions.pose
         self.mp_drawing = mp.solutions.drawing_utils
@@ -236,6 +238,7 @@ class PostureDetectionService:
         
         # Start the capture thread
         self.start()
+        
     
     def start(self):
         """Start the detection service"""
@@ -351,8 +354,21 @@ class PostureDetectionService:
                 base64_image = f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
                 
                 # Determine if this posture needs an alert (anything not 'good_')
-                needs_alert = not posture_class.startswith("good_")
-                
+                is_good_posture = (
+                    posture_class.startswith("good_") or 
+                    "right" in posture_class or 
+                    "correct" in posture_class
+                )
+                needs_alert = not is_good_posture
+                if needs_alert:
+                    current_time = datetime.now()
+                    if self.last_alert_time is None or (current_time - self.last_alert_time).total_seconds() > 5.0:
+                        try:
+                            logger.info(f"Phát hiện tư thế cần cảnh báo: {posture_class}, phát âm thanh")
+                            self.alert_service.play_alert_sound(posture_class)
+                            self.last_alert_time = current_time
+                        except Exception as e:
+                            logger.error(f"Lỗi khi phát âm thanh cảnh báo: {str(e)}")
                 # Prepare the frame data
                 posture_info = PostureInfo(
                     posture=posture_class,
