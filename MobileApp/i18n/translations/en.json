@@ -1,0 +1,30 @@
+{
+    "auth": {
+      "login": {
+        "title": "Login",
+        "subtitle": "Sign in to continue",
+        "username": "Username",
+        "password": "Password",
+        "usernamePlaceholder": "Enter your username",
+        "passwordPlaceholder": "Enter your password",
+        "submit": "Login",
+        "recommend": "Don't have an account?",
+        "register": "Register"
+      },
+      "register": {
+        "title": "Register",
+        "subtitle": "Create a new account",
+        "username": "Username",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "usernamePlaceholder": "Enter your username",
+        "emailPlaceholder": "Enter your email",
+        "passwordPlaceholder": "Enter your password",
+        "confirmPasswordPlaceholder": "Confirm your password",
+        "submit": "Register",
+        "recommend": "Already have an account?",
+        "login": "Login"
+      }
+    }
+  }

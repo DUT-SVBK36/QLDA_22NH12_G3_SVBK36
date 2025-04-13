@@ -1,34 +1,47 @@
 # Python
-*.py[cod]
-*.pyo
-*.pyd
 __pycache__/
-*.so
-
-# Django
-*.log
-*.pot
-*.pyc
-*.pyo
-*.pyd
-__pycache__/
-db.sqlite3
-*.sqlite3
-*.mo
-*.pot
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
 *.so
-
-# Environments
-.env
-.venv
+.Python
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Project specific
+screenshots/*.jpg
+screenshots/*.png
+logs/
+*.log
+
+# Jupyter Notebook
+.ipynb_checkpoints
 
 # Distribution / packaging
 .Python
@@ -44,20 +57,13 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
 .tox/
-.nox/
 .coverage
 .coverage.*
 .cache
@@ -65,8 +71,6 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/
-cover/
 
 # Translations
 *.mo
@@ -76,6 +80,7 @@ cover/
 *.log
 local_settings.py
 db.sqlite3
+db.sqlite3-journal
 
 # Flask stuff:
 instance/
@@ -100,8 +105,19 @@ ipython_config.py
 # pyenv
 .python-version
 
-# celery beat schedule file
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
 celerybeat-schedule
+celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
@@ -114,6 +130,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+
 
 # Spyder project settings
 .spyderproject
@@ -132,3 +150,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Project
+posture_data/screenshots/
+*.old.txt

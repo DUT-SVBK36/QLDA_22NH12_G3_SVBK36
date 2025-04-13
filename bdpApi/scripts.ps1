@@ -1,0 +1,1 @@
+python app\database\init_db.py
