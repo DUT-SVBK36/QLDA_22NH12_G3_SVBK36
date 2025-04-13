@@ -282,7 +282,27 @@ class WebSocketManager:
                             
                             if previous_session_item_id:
                                 frame_data_dict["session_item_id"] = str(previous_session_item_id)
-                    
+                    if frame_data.posture.need_alert:
+                        try:
+                            # Tránh phát âm thanh quá thường xuyên
+                            current_time = datetime.now()
+                            last_alert_time = getattr(self, 'last_alert_time', None)
+                            alert_cooldown = 5.0  # 5 giây giữa các cảnh báo
+                            
+                            if last_alert_time is None or (current_time - last_alert_time).total_seconds() > alert_cooldown:
+                                logger.info(f"Phát hiện need_alert=true, đang phát âm thanh cho tư thế: {current_posture_id}")
+                                
+                                # Import và khởi tạo AlertService
+                                from app.services.alert_service import AlertService
+                                alert_service = AlertService()
+                                
+                                # Phát âm thanh
+                                alert_service.play_alert_sound(current_posture_id)
+                                
+                                # Cập nhật thời gian cảnh báo cuối cùng
+                                self.last_alert_time = current_time
+                        except Exception as e:
+                            logger.error(f"Lỗi khi phát âm thanh cảnh báo từ WebSocket: {str(e)}")
                     # Gửi kết quả cho client - chỉ nếu là tư thế mới hoặc interval
                     if is_new_posture or should_save_image:
                         await self.send_message(client_id, {
@@ -397,20 +417,49 @@ async def handle_websocket(websocket: WebSocket, client_id: str, token: str):
             data = await websocket.receive_text()
             try:
                 message = json.loads(data)
-                command = WebSocketCommand(**message)
+                if isinstance(message, dict) and "check_alert" in message and message["check_alert"] == True:
+                    logger.info("Nhận lệnh kiểm tra âm thanh cảnh báo")
+                    # Phát âm thanh cảnh báo
+                    from app.services.alert_service import AlertService
+                    alert_service = AlertService()
+                    alert_service.play_alert_sound("bad_sitting_forward")
+                    await ws_manager.send_message(client_id, {
+                        "type": "alert_status",
+                        "message": "Đã phát âm thanh cảnh báo"
+                    })
+                    continue
+                try:
+                    command = WebSocketCommand(**message)
+                    
+                    if command.action == "start":
+                        # Sử dụng user_id đã xác thực và camera_url nếu có
+                        camera_url = command.camera_url if hasattr(command, 'camera_url') else None
+                        await ws_manager.start_detection(client_id, command.camera_id, user_id, camera_url)
+                    
+                    elif command.action == "stop":
+                        await ws_manager.stop_detection(client_id)
+                    
+                    elif command.action == "test_alert":
+                        # Thêm lệnh test_alert
+                        logger.info("Nhận lệnh test âm thanh cảnh báo")
+                        from app.services.alert_service import AlertService
+                        alert_service = AlertService()
+                        alert_service.play_alert_sound("bad_sitting_forward")
+                        await ws_manager.send_message(client_id, {
+                            "type": "alert_status",
+                            "message": "Đã phát âm thanh cảnh báo"
+                        })
+                    
+                    else:
+                        await ws_manager.send_message(client_id, {
+                            "type": "error",
+                            "message": f"Unknown command: {command.action}"
+                        })
                 
-                if command.action == "start":
-                    # Sử dụng user_id đã xác thực và camera_url nếu có
-                    camera_url = command.camera_url if hasattr(command, 'camera_url') else None
-                    await ws_manager.start_detection(client_id, command.camera_id, user_id, camera_url)
-                
-                elif command.action == "stop":
-                    await ws_manager.stop_detection(client_id)
-                
-                else:
+                except Exception as e:
                     await ws_manager.send_message(client_id, {
                         "type": "error",
-                        "message": f"Unknown command: {command.action}"
+                        "message": f"Error processing command: {str(e)}"
                     })
             
             except json.JSONDecodeError:
@@ -424,6 +473,14 @@ async def handle_websocket(websocket: WebSocket, client_id: str, token: str):
                     "type": "error",
                     "message": f"Error processing command: {str(e)}"
                 })
+    
+    except WebSocketDisconnect:
+        ws_manager.disconnect(client_id)
+    
+    except Exception as e:
+        logger.error(f"WebSocket error for client {client_id}: {str(e)}")
+        await websocket.close()
+        ws_manager.disconnect(client_id)
     
     except WebSocketDisconnect:
         ws_manager.disconnect(client_id)

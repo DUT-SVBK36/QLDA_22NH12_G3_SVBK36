@@ -9,3 +9,4 @@ router.include_router(websocket.router, tags=["websocket"])
 router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 router.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
 router.include_router(labels.router, prefix="/labels", tags=["labels"])
+
