@@ -2,10 +2,12 @@ import RecentSession from "@/components/ui/_Detect/RecentSession";
 import WrongPostureCard from "@/components/ui/_Detect/WrongPostureCard";
 import CustomButton from "@/components/ui/CustomButton";
 import CustomWindow from "@/components/ui/CustomWindow";
+import PopUp from "@/components/ui/PopUp";
 import { BaseColors } from "@/constants/Colors";
 import { useSocket } from "@/contexts/DetectContext";
 import { PostureUpdate } from "@/models/posture.model";
 import { AuthService } from "@/services/auth";
+import { usePopupStore } from "@/services/popup";
 import SharedAssets from "@/shared/SharedAssets";
 import { Container, Fonts } from "@/shared/SharedStyles";
 import { playPostureWarning, preloadPostureSounds } from "@/utils/play-audio";
@@ -25,6 +27,7 @@ export default function DetectScreen() {
   const [wrongPostures, setWrongPostures] = useState<PostureData[]>([]);
   const [livePostureData, setLivePostureData] = useState<PostureUpdate | null>(null);
   const { socket, isConnected, connect, disconnect, emit } = useSocket();
+  const { isVisible, currentItem, showPopup, hidePopup } = usePopupStore();
   
 
   useEffect(() => {
@@ -234,6 +237,18 @@ export default function DetectScreen() {
         </CustomWindow>
         
       </ScrollView>
+      
+      {currentItem && (
+        <PopUp
+          visible={isVisible}
+          onClose={hidePopup}
+          image={currentItem.image}
+          label={currentItem.label_name || ''}
+          accuracy={currentItem.accuracy || 0}
+          timestamp={currentItem.timestamp as number || 0}
+          recommendation={currentItem.label_recommendation}
+        />
+      )}
     </>
   )
 }
@@ -246,7 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   statusText: {
-    color: "white",
+    color: "black",
     fontFamily: "Lexend",
     marginLeft: 8,
     marginTop: 12,
