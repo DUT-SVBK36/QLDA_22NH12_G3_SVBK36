@@ -190,6 +190,93 @@ API phát hiện tư thế ngồi và cung cấp phản hồi thời gian thực
 - **session_items**: Chi tiết từng tư thế trong một phiên
 - **labels**: Các nhãn tư thế và khuyến nghị
 
+
+## API Thống kê tư thế
+
+API thống kê cung cấp dữ liệu phân tích chi tiết về tư thế của người dùng theo nhiều khía cạnh khác nhau, giúp hiển thị biểu đồ và báo cáo trực quan.
+
+### 1. Phân bố tư thế
+
+- **Method**: GET
+- **URL**: `/api/analytics/distribution`
+- **Query Parameters**:
+  - `start_date`: Thời gian bắt đầu (tùy chọn)
+  - `end_date`: Thời gian kết thúc (tùy chọn)
+  - `session_id`: ID phiên cụ thể (tùy chọn)
+- **Response**: Phân bố các loại tư thế, bao gồm số lượng, thời lượng và phần trăm
+
+### 2. Thời lượng tư thế
+
+- **Method**: GET
+- **URL**: `/api/analytics/duration`
+- **Query Parameters**:
+  - `start_date`: Thời gian bắt đầu (tùy chọn)
+  - `end_date`: Thời gian kết thúc (tùy chọn)
+  - `session_id`: ID phiên cụ thể (tùy chọn)
+- **Response**: Thời lượng của mỗi loại tư thế, bao gồm tổng thời gian, thời gian trung bình, tối đa, tối thiểu
+
+### 3. Lịch sử tư thế
+
+- **Method**: GET
+- **URL**: `/api/analytics/history`
+- **Query Parameters**:
+  - `start_date`: Thời gian bắt đầu (tùy chọn)
+  - `end_date`: Thời gian kết thúc (tùy chọn)
+  - `limit`: Số lượng mục tối đa (mặc định: 100)
+- **Response**: Lịch sử chi tiết các tư thế theo thời gian
+
+### 4. Sự cải thiện tư thế
+
+- **Method**: GET
+- **URL**: `/api/analytics/improvement`
+- **Query Parameters**:
+  - `days`: Số ngày phân tích (mặc định: 30)
+- **Response**: Dữ liệu về sự cải thiện tư thế theo thời gian, xu hướng tư thế tốt/xấu
+
+### 5. Tóm tắt tư thế theo ngày
+
+- **Method**: GET
+- **URL**: `/api/analytics/daily-summary`
+- **Query Parameters**:
+  - `date`: Ngày cần phân tích (mặc định: ngày hiện tại)
+- **Response**: Tóm tắt chi tiết tư thế trong một ngày, bao gồm phân bố theo giờ
+
+### 6. Tóm tắt tư thế theo tuần
+
+- **Method**: GET
+- **URL**: `/api/analytics/weekly-summary`
+- **Query Parameters**:
+  - `start_date`: Ngày đầu tuần (mặc định: thứ 2 của tuần hiện tại)
+- **Response**: Tóm tắt chi tiết tư thế trong một tuần, bao gồm phân bố theo ngày
+
+### 7. So sánh hai khoảng thời gian
+
+- **Method**: GET
+- **URL**: `/api/analytics/compare-periods`
+- **Query Parameters**:
+  - `period1_start`: Thời gian bắt đầu khoảng 1
+  - `period1_end`: Thời gian kết thúc khoảng 1
+  - `period2_start`: Thời gian bắt đầu khoảng 2
+  - `period2_end`: Thời gian kết thúc khoảng 2
+- **Response**: So sánh chi tiết về tư thế giữa hai khoảng thời gian
+
+### 8. Thống kê tổng hợp người dùng
+
+- **Method**: GET
+- **URL**: `/api/analytics/user-stats`
+- **Response**: Thống kê tổng hợp về người dùng, bao gồm tổng số phiên, thời gian sử dụng, tỷ lệ tư thế tốt/xấu
+
+## Dữ liệu biểu đồ
+
+API thống kê cung cấp dữ liệu phù hợp cho các loại biểu đồ sau:
+
+1. **Biểu đồ tròn**: Sử dụng dữ liệu từ `/api/analytics/distribution` để hiển thị phân bố tư thế
+2. **Biểu đồ cột**: Sử dụng dữ liệu từ `/api/analytics/duration` để hiển thị thời lượng các tư thế
+3. **Biểu đồ đường**: Sử dụng dữ liệu từ `/api/analytics/improvement` để hiển thị xu hướng tư thế theo thời gian
+4. **Biểu đồ nhiệt**: Sử dụng dữ liệu từ `/api/analytics/daily-summary` để hiển thị phân bố tư thế theo giờ
+5. **Biểu đồ so sánh**: Sử dụng dữ liệu từ `/api/analytics/compare-periods` để so sánh hai khoảng thời gian
+
+
 ## Cấu trúc mã nguồn
 
 - **app/**
