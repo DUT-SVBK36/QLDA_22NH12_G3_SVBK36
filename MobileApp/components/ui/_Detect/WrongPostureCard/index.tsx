@@ -1,9 +1,10 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import styles from "./styles.css";
 import { Fonts } from "@/shared/SharedStyles";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import config from "@/constants/config";
 import { useState } from "react";
+import { usePopupStore } from "@/services/popup";
 
 interface WrongPostureCardProps {
     id?: string;
@@ -13,6 +14,7 @@ interface WrongPostureCardProps {
     accuracy?: number;
     desc?: string;
     timestamp?: string;
+    event? : () => void;
 }
 
 export default function WrongPostureCard(
@@ -26,28 +28,26 @@ export default function WrongPostureCard(
         timestamp = new Date().toLocaleString("vi-VN", { hour12: false })
     }: WrongPostureCardProps
 ) {
+    const { showPopup } = usePopupStore();
     const [isExpanded, setIsExpanded] = useState(false);
     return (
         <>
             <TouchableOpacity style={[
                 styles.container
             ]}
-            onPress={() => {
-                setIsExpanded(!isExpanded);
-            }}
+            onPress={() => showPopup({
+                image: image,
+                label_name: detectedPosture,
+                accuracy: accuracy,
+                timestamp: timestamp,
+                label_recommendation: desc
+              })}
+              activeOpacity={0.7}
             >
-                <Image
-                    source={{
-                        uri: `${image}`
-                    }}
-                    style={[
-                        styles.img,
-                        isExpanded && {
-                            flex: 1,
-                            height: "100%",
-                            objectFit: "cover",
-                        }
-                    ]}
+                <Ionicons 
+                    name="image"
+                    size={24}
+                    color={"black"}
                 />
                 <View style={[
                     styles.content
@@ -73,7 +73,7 @@ export default function WrongPostureCard(
                         <FontAwesome5 
                             name="clock" 
                             size={10} 
-                            color={"white"}
+                            color={"black"}
                         />  {new Date(timestamp).toLocaleString("vi-VN", { hour12: false })}
                     </Text>
                 </View>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, Image, ImageBackground } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, Image, ImageBackground, ScrollView, TouchableOpacity } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Session, SessionItem } from "@/models/session.model";
 import { SessionService } from "@/services/sessions";
@@ -7,13 +7,16 @@ import { Container, Fonts } from "@/shared/SharedStyles";
 import { BaseColors } from "@/constants/Colors";
 import CustomWindow from "@/components/ui/CustomWindow";
 import SharedAssets from "@/shared/SharedAssets";
+import { usePopupStore } from "@/services/popup";
+import PopUp from "@/components/ui/PopUp";
 
 export default function SessionDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-
+    const { isVisible, currentItem, showPopup, hidePopup } = usePopupStore();
+    
     useEffect(() => {
         const fetchSessionDetail = async () => {
             if (!id) return;
@@ -39,7 +42,11 @@ export default function SessionDetailScreen() {
     };
     
     const renderSessionItem = ({ item }: { item: SessionItem }) => (
-        <View style={styles.itemContainer}>
+        <TouchableOpacity 
+            style={styles.itemContainer}
+            onPress={() => showPopup(item)}
+            activeOpacity={0.7}
+        >
             {item.image && (
                 <Image 
                     source={{ uri: item.image }} 
@@ -52,7 +59,7 @@ export default function SessionDetailScreen() {
                     {item.label_name}
                 </Text>
                 <Text style={[Fonts.small, styles.itemTime]}>
-                    Time: {formatTimespan(item.timestamp)}
+                    Time: {formatTimespan(item.timestamp as number)}
                 </Text>
                 <Text style={[Fonts.small, styles.itemAccuracy]}>
                     Accuracy: {Math.round(item.accuracy * 100)}%
@@ -63,7 +70,7 @@ export default function SessionDetailScreen() {
                     </Text>
                 )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 
     if (loading) {
@@ -126,6 +133,17 @@ export default function SessionDetailScreen() {
                     </Text>
                 )}
             </CustomWindow>
+            {currentItem && (
+                <PopUp
+                    visible={isVisible}
+                    onClose={hidePopup}
+                    image={currentItem.image}
+                    label={currentItem.label_name || ''}
+                    accuracy={currentItem.accuracy || 0}
+                    timestamp={currentItem.timestamp as number || 0}
+                    recommendation={currentItem.label_recommendation}
+                />
+            )}
         </View>
         </>
         
@@ -150,6 +168,7 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         paddingVertical: 8,
+        paddingBottom: 56
     },
     itemContainer: {
         flexDirection: 'row',
