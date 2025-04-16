@@ -13,25 +13,46 @@ class AlertService:
     def __init__(self):
         # Khởi tạo pygame để phát âm thanh (phương án dự phòng)
         pygame.mixer.init()
+        self.is_playing = False
+        self.last_play_time = None
     
     # Sửa lại định nghĩa hàm - đưa ra khỏi __init__
     def play_alert_sound(self, sound_name: str = "alert.mp3") -> None:
         """Phát âm thanh cảnh báo"""
         try:
+            # Kiểm tra nếu đang phát âm thanh và chưa đủ thời gian
+            current_time = datetime.now()
+            if self.is_playing and self.last_play_time and (current_time - self.last_play_time).total_seconds() < 20:
+                logger.info(f"Đang phát âm thanh, bỏ qua yêu cầu mới: {sound_name}")
+                return
+
             # Map tên tư thế sang ID track
             track_id = self.map_posture_to_track(sound_name)
             
             # Ghi log trước khi gửi lệnh
             logger.info(f"Chuẩn bị gửi lệnh phát âm thanh: {sound_name} (Track {track_id})")
             
+            # Đánh dấu đang phát âm thanh
+            self.is_playing = True
+            self.last_play_time = current_time
+            
             # Gửi lệnh phát âm thanh đến ESP32 với track_id đã được ánh xạ
             self.send_audio_command_to_esp32(track_id)
+            
+            # Đặt hẹn giờ để đánh dấu kết thúc phát âm thanh sau 15 giây
+            import threading
+            threading.Timer(15.0, self._reset_playing_state).start()
             
             logger.info(f"Đã gửi lệnh phát âm thanh: {sound_name} (Track {track_id})")
         except Exception as e:
             logger.error(f"Lỗi khi phát âm thanh: {e}")
+            self.is_playing = False
             # Thử phát âm thanh cục bộ nếu gửi lệnh đến ESP32 thất bại
             self._play_local_sound(f"track_{track_id}")
+    def _reset_playing_state(self):
+        """Reset trạng thái phát âm thanh"""
+        self.is_playing = False
+        logger.info("Đã reset trạng thái phát âm thanh")
     
     def _play_local_sound(self, sound_name: str) -> None:
         """Phát âm thanh từ backend (phương án dự phòng)"""
@@ -50,15 +71,14 @@ class AlertService:
         """Ánh xạ tên tư thế sang ID track âm thanh"""
         # Map tên tư thế sang ID track tương ứng
         track_mapping = {
-            "good_posture": 1,
-            "bad_sitting_forward": 2,
-            "bad_sitting_backward": 3,
-            "leaning_left_side": 4,
-            "leaning_right_side": 5,
-            "neck_right": 6,
+            
+            "bad_sitting_forward": 6,
+            "bad_sitting_backward": 8,
+            "too_lean_left_side": 3,
+            "too_lean_right_side": 4,
             "neck_wrong": 7,
-            "leg_right": 8,
-            "leg_wrong": 8
+            
+            "leg_wrong": 5
         }
         
         # Ánh xạ tên tư thế sang track ID

@@ -8,7 +8,7 @@ class PostureMonitor:
         self.bad_posture_threshold = bad_posture_threshold
         self.alert_active = False
         self.last_alert_time = None
-        self.alert_cooldown = 10  # Thời gian chờ giữa các cảnh báo (giây)
+        self.alert_cooldown = 20  # Thời gian chờ giữa các cảnh báo (giây)
         self.posture_history = []
         self.max_history = 100  # Số lượng mẫu tối đa trong lịch sử
     
@@ -23,7 +23,6 @@ class PostureMonitor:
         # Kiểm tra tư thế với hỗ trợ cho phân loại mới
         is_good_posture = (
             # Our simplified good postures
-            "right" in posture or 
             "correct" in posture or
             posture == "posture" or  # Generic good posture
             posture.startswith("good_")  # Keep backward compatibility with good_ prefix

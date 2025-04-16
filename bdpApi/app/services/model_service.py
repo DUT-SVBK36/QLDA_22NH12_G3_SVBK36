@@ -356,13 +356,13 @@ class PostureDetectionService:
                 # Determine if this posture needs an alert (anything not 'good_')
                 is_good_posture = (
                     posture_class.startswith("good_") or 
-                    "right" in posture_class or 
+                    
                     "correct" in posture_class
                 )
                 needs_alert = not is_good_posture
                 if needs_alert:
                     current_time = datetime.now()
-                    if self.last_alert_time is None or (current_time - self.last_alert_time).total_seconds() > 5.0:
+                    if self.last_alert_time is None or (current_time - self.last_alert_time).total_seconds() > 20.0:
                         try:
                             logger.info(f"Phát hiện tư thế cần cảnh báo: {posture_class}, phát âm thanh")
                             self.alert_service.play_alert_sound(posture_class)
