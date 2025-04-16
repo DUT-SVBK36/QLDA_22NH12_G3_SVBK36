@@ -3,6 +3,7 @@ import { View, Text, Modal, Image, TouchableOpacity, TouchableWithoutFeedback } 
 import { Fonts } from '@/shared/SharedStyles';
 import { BaseColors } from '@/constants/Colors';
 import styles from './styles.css';
+import { PostureMappedString } from '@/utils/postures-map';
 
 interface PopUpProps {
   visible: boolean;
@@ -39,7 +40,7 @@ const PopUp: React.FC<PopUpProps> = ({
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback onPress={e => e.stopPropagation()}>
             <View style={styles.modalContent}>
-              <Text style={[Fonts.h2, styles.title]}>{label}</Text>
+              <Text style={[Fonts.h2, styles.title]}>{PostureMappedString[label]}</Text>
               
               {image && (
                 <View style={styles.imageContainer}>

@@ -1,25 +1,47 @@
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Image, ScrollView, Text } from "react-native";
 import { useColorScheme } from "react-native";
 import MenuOption from "@/components/ui/MenuOptions";
 import MenuUser from "@/components/ui/MenuUser";
 import SharedAssets from "@/shared/SharedAssets";
-import { router } from 'expo-router';
-import SafeScrollView from "@/components/layout/SafeScrollView";
+import { router, useRouter } from 'expo-router';
 import { Colors } from "@/constants/Colors";
 import { Container, Fonts } from "@/shared/SharedStyles";
 import { useAuth } from "@/contexts/AuthContext";
+import { AuthService } from "@/services/auth";
 
 export default function UserMenu() {
   const colorScheme = useColorScheme();
   const check = colorScheme ?? "light";
   const { logout } = useAuth();
+  const router = useRouter();
+  const [username, setUsername] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const userData = await AuthService.me();
+        if (userData) {
+          setUsername(userData.username || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   return (
     <ScrollView
         style={[
           Container.base,
           {
             backgroundColor: Colors[check].background,
-            // paddingTop: 0,
           }
         ]}
       >
@@ -32,7 +54,9 @@ export default function UserMenu() {
         >
             Menu
         </Text>
-        <MenuUser />
+        <MenuUser username={username} onPress={
+          () => router.push('/menu/me')}
+        />
         <MenuOption icon="globe" label="Language: English" />
         <MenuOption icon="test" label="Test" 
           onPress={() => router.push('/test/socket')}
@@ -66,6 +90,7 @@ export default function UserMenu() {
   );
 }
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,
