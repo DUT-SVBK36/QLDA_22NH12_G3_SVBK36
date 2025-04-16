@@ -282,12 +282,12 @@ class WebSocketManager:
                             
                             if previous_session_item_id:
                                 frame_data_dict["session_item_id"] = str(previous_session_item_id)
-                    if frame_data.posture.need_alert:
+                    if frame_data.posture.need_alert :
                         try:
                             # Tránh phát âm thanh quá thường xuyên
                             current_time = datetime.now()
                             last_alert_time = getattr(self, 'last_alert_time', None)
-                            alert_cooldown = 5.0  # 5 giây giữa các cảnh báo
+                            alert_cooldown = 20.0 
                             
                             if last_alert_time is None or (current_time - last_alert_time).total_seconds() > alert_cooldown:
                                 logger.info(f"Phát hiện need_alert=true, đang phát âm thanh cho tư thế: {current_posture_id}")
