@@ -11,6 +11,7 @@ import { usePopupStore } from "@/services/popup";
 import SharedAssets from "@/shared/SharedAssets";
 import { Container, Fonts } from "@/shared/SharedStyles";
 import { playPostureWarning, preloadPostureSounds } from "@/utils/play-audio";
+import { PostureMappedString } from "@/utils/postures-map";
 import { useEffect, useState } from "react";
 import { ImageBackground, ScrollView, StyleSheet, Text, View} from "react-native";
 
@@ -81,20 +82,21 @@ export default function DetectScreen() {
         }
        * 
        */
-      
+
       if(data.is_new_posture && data.posture.confidence > 0.9) {
-        setInterval(() => setWrongPostures(prev => [...prev, {
+        if (data.posture.posture === "good_posture") return;
+        setWrongPostures(prev => [...prev, {
           id: new Date().toISOString(),
           image: data.image,
           posture: data.posture.posture,
           accuracy: data.posture.confidence,
           timestamp: data.timestamp
-        }]), 2000);
+        }]);
 
         console.log('New posture detected:', data.posture.posture);
         // Play sound based on the detected posture
-        if (data.posture.posture === "good_posture") return;
-        playPostureWarning("bad_sitting_backward");
+        
+        // playPostureWarning("bad_sitting_backward");
       }
     });
     socket.on('session_item_completed', (data: any) => {
@@ -168,7 +170,11 @@ export default function DetectScreen() {
         }}
       />
       <ScrollView style={[
-          Container.base
+          Container.base,
+          {
+            paddingBottom: 54,
+            // backgroundColor: BaseColors.white,
+          }
       ]}
         contentContainerStyle={[
           Container.baseContent,
@@ -194,7 +200,7 @@ export default function DetectScreen() {
             {livePostureData && (
               <>
                 <Text style={styles.statusText}>
-                  Current posture: {livePostureData.posture.posture} 
+                  Current posture: { PostureMappedString[livePostureData.posture.posture] } 
                 </Text>
                 <Text style={styles.statusText}>
                   Accuracy: {(livePostureData.posture.confidence * 100).toFixed(2)}%
@@ -267,7 +273,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   noPostures: {
-    color: BaseColors.secondary,
+    color: BaseColors.black,
     textAlign: "center",
     padding: 16
   }

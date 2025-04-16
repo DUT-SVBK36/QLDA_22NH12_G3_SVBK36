@@ -44,11 +44,20 @@ export default function CustomWindow(
                     styles.content,
                     maxHeight ? { maxHeight } : null,
                 ]}
-                contentContainerStyle={scrollable ? [
+                contentContainerStyle={[
                     styles.contentContainer,
                     contentContainerStyle,
-                ] : undefined}
-                showsVerticalScrollIndicator={scrollable}
+                ]}
+                showsVerticalScrollIndicator={true}
+                bounces={true}
+                // Add bottom padding to prevent content from being hidden
+                contentInset={{ bottom: 20 }}
+                // Ensure scrolling works properly on Android
+                persistentScrollbar={true}
+                // Improve scroll behavior
+                alwaysBounceVertical={scrollable}
+                // Ensure proper flex behavior
+                nestedScrollEnabled={true}
             >
                 {children}
             </ContentWrapper>

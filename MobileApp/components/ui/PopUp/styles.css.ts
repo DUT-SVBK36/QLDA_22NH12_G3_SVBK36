@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   title: {
     color: BaseColors.primary,
     marginBottom: 16,
-    fontWeight: "bold",
+    // fontWeight: "bold",
     textAlign: "center",
   },
   imageContainer: {

@@ -49,14 +49,14 @@ export default function UserCard(
                 <View style={[styles.contentHolder]}>
                     <Text style={[
                         Fonts.body,
-                        {color: BaseColors.white}
+                        {color: BaseColors.dark_pri}
                     ]}>
                         {username}
                     </Text>
                     <View style={[styles.level]}>
                         <Text style={[
                             Fonts.caption,
-                            {color: BaseColors.white}
+                            {color: BaseColors.dark_pri}
                         ]}
                         >
                             Lvl.{currentLevel}
@@ -64,7 +64,7 @@ export default function UserCard(
                             <Progress.Bar
                                 width={null}
                                 progress={currentPoints / 100}
-                                color={BaseColors.quaternary}
+                                color={BaseColors.dark_pri}
                             />
                     </View>
                 </View>
