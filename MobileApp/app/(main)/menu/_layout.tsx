@@ -25,6 +25,13 @@ export default function MenuLayout() {
                 }}
             />
             <Stack.Screen
+                name="me"
+                options={{
+                    headerShown: true,
+                    title: 'Dashboard',
+                }}
+            />
+            <Stack.Screen
                 name="setting"
                 options={{
                     // headerShown: false,

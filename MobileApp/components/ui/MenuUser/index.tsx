@@ -1,25 +1,37 @@
 import React from "react";
-import { View, Text, Image, useColorScheme } from "react-native";
+import { View, Text, Image, useColorScheme, TouchableOpacity } from "react-native";
 import { styles } from "./style.css";
 import { Colors } from "@/constants/Colors";
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { Fonts } from "@/shared/SharedStyles";
 
-const MenuUser = () => {
+interface MenuUserProps {
+    username?: string;
+    onPress?: () => void;
+}
+
+const MenuUser = ({
+    username = "UserName",
+    onPress = () => { console.log("User Menu Pressed")}
+}: MenuUserProps
+) => {
     const colorScheme = useColorScheme();
     const check = colorScheme ?? "light";
     const textColor = { color: Colors[check].text };
     
     return (
-        <View style={styles.container}>
+        <TouchableOpacity style={styles.container} onPress={() => {
+            onPress();
+            console.log("User Menu Pressed");
+        }}>
             <Image
                 source={require('../../../assets/images/default.jpg')} 
                 style={styles.avatar} 
                 resizeMode="cover"
             />
             <View style={styles.userInfo}>
-                <Text style={[styles.username, textColor, Fonts.subtitle]}>UserName</Text>
+                <Text style={[styles.username, textColor, Fonts.subtitle]}>{username}</Text>
                 <View style={styles.badge}>
                     <Text style={[styles.badgetext, Fonts.caption]}>Beginner</Text>
                 </View>
@@ -31,7 +43,7 @@ const MenuUser = () => {
                     color={Colors[check].text}
                 />
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 

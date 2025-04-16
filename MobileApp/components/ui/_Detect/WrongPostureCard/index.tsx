@@ -5,6 +5,7 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import config from "@/constants/config";
 import { useState } from "react";
 import { usePopupStore } from "@/services/popup";
+import { PostureMappedString } from "@/utils/postures-map";
 
 interface WrongPostureCardProps {
     id?: string;
@@ -56,7 +57,7 @@ export default function WrongPostureCard(
                         Fonts.caption,
                         styles.titleTint
                     ]}>
-                        {detectedPosture} 
+                        {PostureMappedString[detectedPosture]} 
                         {/* ({(accuracy * 100).toFixed(2)}%) */}
                     </Text>
                     <Text style={[

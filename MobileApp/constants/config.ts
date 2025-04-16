@@ -1,4 +1,4 @@
-const ip = "192.168.1.30:8000";
+const ip = "192.168.47.117:8000";
 
 const config = {
   BASE_URL: `http://${ip}/`,
