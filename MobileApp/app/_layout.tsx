@@ -48,6 +48,7 @@ export default function RootLayout() {
           <Stack.Screen name="+not-found" />
           <Stack.Screen name="(main)" options={{ headerShown: false }} />
           <Stack.Screen name='test' options={{ headerShown: false }} />
+
         </Stack>
     )
   });

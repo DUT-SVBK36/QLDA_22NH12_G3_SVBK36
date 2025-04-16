@@ -7,23 +7,24 @@
  * BaseColors colors
  */
 export const BaseColors = {
-  primary: '#b7b1f2',
-  secondary: '#fdb7ea',
-  tertiary: '#ffdccc',
-  quaternary: '#fbf3b9',
-  dark_pri: '#2b2e4a',
-  dark_blue: '#2a2b38',
-  white: '#fff',
-  black: '#000',
-  inactive: '#9b9b9b',
-}
-
+  primary: "#b7b1f2",
+  secondary: "#fdb7ea",
+  tertiary: "#ffdccc",
+  quaternary: "#fbf3b9",
+  dark_pri: "#2b2e4a",
+  dark_blue: "#2a2b38",
+  white: "#fff",
+  black: "#000",
+  inactive: "#9b9b9b",
+  grey: "#f0f0f0",
+  light_grey: "#d9d9d9",
+  light: "#f1f1f1",
+  red: "#ff0000",
+  pink: "#FFC0CB",
+};
 
 const tintColorDark = BaseColors.primary;
 const tintColorLight = BaseColors.dark_pri;
-
-
-
 
 export const Colors = {
   light: {
@@ -31,13 +32,13 @@ export const Colors = {
     background: BaseColors.white,
     tint: tintColorLight,
     icon: BaseColors.dark_pri,
-    tabIconDefault: '#687076',
+    tabIconDefault: "#687076",
     tabIconSelected: tintColorLight,
 
     button: {
       bg: BaseColors.dark_pri,
       tint: BaseColors.primary,
-    }
+    },
   },
   dark: {
     text: BaseColors.white,
@@ -49,6 +50,6 @@ export const Colors = {
     button: {
       bg: BaseColors.primary,
       tint: BaseColors.dark_pri,
-    }
+    },
   },
 };

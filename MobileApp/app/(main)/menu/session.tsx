@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, Image, ImageBackground, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, FlatList, ImageBackground, SafeAreaView } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Session, SessionItem } from "@/models/session.model";
 import { SessionService } from "@/services/sessions";
@@ -9,13 +9,14 @@ import CustomWindow from "@/components/ui/CustomWindow";
 import SharedAssets from "@/shared/SharedAssets";
 import { usePopupStore } from "@/services/popup";
 import PopUp from "@/components/ui/PopUp";
+import SessionItemDetail from "@/components/ui/_Detect/SessionItemDetail";
 
 export default function SessionDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const { isVisible, currentItem, showPopup, hidePopup } = usePopupStore();
+    const { isVisible, currentItem, hidePopup } = usePopupStore();
     
     useEffect(() => {
         const fetchSessionDetail = async () => {
@@ -35,42 +36,9 @@ export default function SessionDetailScreen() {
 
         fetchSessionDetail();
     }, [id]);
-
-    const formatTimespan = (timestamp: number) => {
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleTimeString();
-    };
     
     const renderSessionItem = ({ item }: { item: SessionItem }) => (
-        <TouchableOpacity 
-            style={styles.itemContainer}
-            onPress={() => showPopup(item)}
-            activeOpacity={0.7}
-        >
-            {item.image && (
-                <Image 
-                    source={{ uri: item.image }} 
-                    style={styles.itemImage} 
-                    resizeMode="cover"
-                />
-            )}
-            <View style={styles.itemContent}>
-                <Text style={[Fonts.bodySmall, styles.itemTitle]}>
-                    {item.label_name}
-                </Text>
-                <Text style={[Fonts.small, styles.itemTime]}>
-                    Time: {formatTimespan(item.timestamp as number)}
-                </Text>
-                <Text style={[Fonts.small, styles.itemAccuracy]}>
-                    Accuracy: {Math.round(item.accuracy * 100)}%
-                </Text>
-                {item.label_recommendation && (
-                    <Text style={[Fonts.small, styles.itemRecommendation]}>
-                        {item.label_recommendation}
-                    </Text>
-                )}
-            </View>
-        </TouchableOpacity>
+        <SessionItemDetail item={item} />
     );
 
     if (loading) {
@@ -95,7 +63,7 @@ export default function SessionDetailScreen() {
 
     return (
         <>
-        <ImageBackground 
+            <ImageBackground 
                 source={SharedAssets.Bg}
                 resizeMode="cover"
                 style={{
@@ -104,35 +72,49 @@ export default function SessionDetailScreen() {
                     position: "absolute",
                 }}
             />
-        <View style={Container.base}>
-            <Text style={[Container.title, Fonts.h1]}>Session Detail</Text>
-            
-            <CustomWindow title="Session Information" scrollable={false}>
-                <Text style={[Fonts.bodySmall, styles.sessionInfo]}>
-                    Date: {sessionDate}
-                </Text>
-                <Text style={[Fonts.bodySmall, styles.sessionInfo]}>
-                    ID: {session._id}
-                </Text>
-                <Text style={[Fonts.bodySmall, styles.sessionInfo]}>
-                    Items: {session.items?.length || 0}
-                </Text>
-            </CustomWindow>
+            <SafeAreaView style={styles.safeArea}>
+                <View style={styles.scrollContainer}>
+                    <Text style={[Container.title, Fonts.h1]}>Session Detail</Text>
+                    
+                    <CustomWindow title="Session Information" scrollable={false}>
+                        <Text style={[Fonts.bodySmall, styles.sessionInfo]}>
+                            Date: {sessionDate}
+                        </Text>
+                        <Text style={[Fonts.bodySmall, styles.sessionInfo]}>
+                            ID: {session._id}
+                        </Text>
+                        <Text style={[Fonts.bodySmall, styles.sessionInfo]}>
+                            Items: {session.items?.length || 0}
+                        </Text>
+                    </CustomWindow>
 
-            <CustomWindow title="Posture Items" scrollable={false}>
-                {session.items && session.items.length > 0 ? (
-                    <FlatList
-                        data={session.items}
-                        renderItem={renderSessionItem}
-                        keyExtractor={(item) => item._id}
-                        contentContainerStyle={styles.listContainer}
-                    />
-                ) : (
-                    <Text style={[Fonts.body, styles.noItemsText]}>
-                        No items in this session
-                    </Text>
-                )}
-            </CustomWindow>
+                    <CustomWindow 
+                        title="Posture Items" 
+                        scrollable={false}
+                        maxHeight={400} // Set a max height for the scrollable area
+                        contentContainerStyle={styles.postureItemsContainer}
+                    >
+                        {session.items && session.items.length > 0 ? (
+                            <FlatList
+                                data={session.items}
+                                style={{ paddingHorizontal: 8 }}
+                                renderItem={renderSessionItem}
+                                keyExtractor={(item) => item._id}
+                                contentContainerStyle={styles.listContainer}
+                                // Ensure list is scrollable within the CustomWindow
+                                nestedScrollEnabled={true}
+                                // Add more bottom padding to prevent tab bar overlap
+                                ListFooterComponent={<View style={styles.listFooter} />}
+                            />
+                        ) : (
+                            <Text style={[Fonts.body, styles.noItemsText]}>
+                                No items in this session
+                            </Text>
+                        )}
+                    </CustomWindow>
+                </View>
+            </SafeAreaView>
+            
             {currentItem && (
                 <PopUp
                     visible={isVisible}
@@ -144,13 +126,18 @@ export default function SessionDetailScreen() {
                     recommendation={currentItem.label_recommendation}
                 />
             )}
-        </View>
         </>
-        
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+    },
+    scrollContainer: {
+        ...Container.base,
+        // paddingBottom: 20, // Add extra padding at the bottom to account for tab bar
+    },
     loadingContainer: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -166,51 +153,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 8,
     },
+    postureItemsContainer: {
+        paddingBottom: 16,
+    },
     listContainer: {
         paddingVertical: 8,
-        paddingBottom: 56
     },
-    itemContainer: {
-        flexDirection: 'row',
-        padding: 12,
-        backgroundColor: BaseColors.white,
-        borderRadius: 8,
-        marginBottom: 8,
-    },
-    itemImage: {
-        width: 120,
-        height: 120,
-        borderRadius: 4,
-        marginRight: 12,
-    },
-    itemContent: {
-        flex: 1,
-        justifyContent: 'center',
-
-    },
-    itemTitle: {
-        fontSize: 24,
-        lineHeight: 24,
-        color: BaseColors.black,
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    itemTime: {
-        marginTop: 8,
-        fontSize: 16,
-        lineHeight: 18,
-        color: "silver",
-    },
-    itemAccuracy: {
-        marginTop: 8,
-        fontSize: 16,
-        lineHeight: 18,
-        color: BaseColors.primary,
-    },
-    itemRecommendation: {
-        color: BaseColors.black,
-        marginTop: 4,
-        fontStyle: 'italic',
+    listFooter: {
+        height: 80, // Add a footer spacer to ensure last items are visible
     },
     noItemsText: {
         color: BaseColors.black,
