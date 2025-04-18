@@ -4,6 +4,7 @@ import CustomButton from "@/components/ui/CustomButton";
 import CustomWindow from "@/components/ui/CustomWindow";
 import PopUp from "@/components/ui/PopUp";
 import { BaseColors } from "@/constants/Colors";
+import config from "@/constants/config";
 import { useSocket } from "@/contexts/DetectContext";
 import { PostureUpdate } from "@/models/posture.model";
 import { AuthService } from "@/services/auth";
@@ -35,7 +36,7 @@ export default function DetectScreen() {
     if(!socket) return;
     const prepareApp = async () => {
       // Preload sounds alongside other app initialization
-      await preloadPostureSounds();
+      // await preloadPostureSounds();
       // Other initialization...
     };
     const client_id = AuthService.getUser() || '';
@@ -64,6 +65,7 @@ export default function DetectScreen() {
        */
 
       setLivePostureData(data);
+      
     });
     socket.on('detection_result', (data: any) => {
       console.log('res:', data);
@@ -83,8 +85,9 @@ export default function DetectScreen() {
        * 
        */
 
-      if(data.is_new_posture && data.posture.confidence > 0.9) {
-        if (data.posture.posture === "good_posture") return;
+      if(data.is_new_posture) {
+        if (data.posture.posture !== "good_sitting_side")
+
         setWrongPostures(prev => [...prev, {
           id: new Date().toISOString(),
           image: data.image,
@@ -92,7 +95,6 @@ export default function DetectScreen() {
           accuracy: data.posture.confidence,
           timestamp: data.timestamp
         }]);
-
         console.log('New posture detected:', data.posture.posture);
         // Play sound based on the detected posture
         
@@ -138,7 +140,8 @@ export default function DetectScreen() {
     if (socket && isConnected) {
       const message = {
         action: "start",
-        camera_id: "0",
+        camera_id: "1",
+        camera_url: config.CAMERA_URL,
       }
       emit(message);
       console.log('Started detection');

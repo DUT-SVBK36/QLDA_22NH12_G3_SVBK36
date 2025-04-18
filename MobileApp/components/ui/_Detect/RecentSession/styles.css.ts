@@ -5,7 +5,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: BaseColors.white,
     borderRadius: 8,
-    marginVertical: 16,
+    // marginVertical: 16,
     padding: 16,
     width: "100%",
     flex: 1,
