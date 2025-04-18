@@ -50,15 +50,12 @@ class AlertService:
         """Ánh xạ tên tư thế sang ID track âm thanh"""
         # Map tên tư thế sang ID track tương ứng
         track_mapping = {
-            "good_posture": 1,
-            "bad_sitting_forward": 2,
-            "bad_sitting_backward": 3,
-            "leaning_left_side": 4,
-            "leaning_right_side": 5,
-            "neck_right": 6,
-            "neck_wrong": 7,
-            "leg_right": 8,
-            "leg_wrong": 8
+            "bad_sitting_forward": 6,
+            "bad_sitting_backward": 8,
+            "too_lean_left_side": 3,
+            "too_lean_right_side": 4,
+            "neck_wrong_position": 7,
+            "leg_wrong_position": 5
         }
         
         # Ánh xạ tên tư thế sang track ID

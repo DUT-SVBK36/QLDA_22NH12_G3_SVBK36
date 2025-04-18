@@ -14,9 +14,9 @@
         "neck_right_position",
         "neck_wrong_position"
     ],
-    "training_time": 49.328211069107056,
-    "posture_test_acc": 0.9927361011505127,
+    "training_time": 42.68424201011658,
+    "posture_test_acc": 0.9840425252914429,
     "leg_test_acc": 0.9942987561225891,
-    "neck_test_acc": 0.9977142810821533,
-    "train_date": "2025-04-09 14:25:16"
+    "neck_test_acc": 0.9916279315948486,
+    "train_date": "2025-04-16 14:29:19"
 }
