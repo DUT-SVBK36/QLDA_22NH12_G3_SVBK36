@@ -22,10 +22,10 @@ class PostureMonitor:
         
         # Kiểm tra tư thế với hỗ trợ cho phân loại mới
         is_good_posture = (
-            # Our simplified good postures
-            "correct" in posture or
-            posture == "posture" or  # Generic good posture
-            posture.startswith("good_")  # Keep backward compatibility with good_ prefix
+            posture == "straight_back" or
+            posture == "vai_thang"
+            
+           
         )
         
         # Nếu tư thế không tốt

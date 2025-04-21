@@ -46,77 +46,92 @@ async def initialize_default_data():
         labels_collection = await get_labels_collection()
         default_labels = [
             {
-                "label_id": "good_posture",
-                "name": "Tư thế đúng",
-                "description": "Tư thế ngồi thẳng lưng, đầu thẳng",
-                "recommendation": "Giữ tư thế này, rất tốt!",
-                "severity_level": 0,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "bad_sitting_forward",
-                "name": "Ngồi cong lưng về phía trước",
-                "description": "Tư thế cong lưng về phía trước, tăng áp lực lên cột sống",
-                "recommendation": "Hãy ngồi thẳng lưng, dựa vào lưng ghế và điều chỉnh màn hình ngang tầm mắt",
-                "severity_level": 3,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "bad_sitting_backward",
-                "name": "Ngồi ngả quá xa về phía sau",
-                "description": "Tư thế ngồi ngả quá xa về phía sau, không hỗ trợ đúng cách cho cột sống",
-                "recommendation": "Hãy điều chỉnh tư thế để lưng tiếp xúc với tựa lưng của ghế ở góc khoảng 100-110 độ",
-                "severity_level": 2,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "leaning_left_side",
-                "name": "Nghiêng về bên trái",
-                "description": "Tư thế nghiêng về bên trái, tạo áp lực không đều lên cột sống",
-                "recommendation": "Hãy điều chỉnh tư thế để trọng lượng phân bố đều trên cả hai bên hông",
-                "severity_level": 2,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "leaning_right_side",
-                "name": "Nghiêng về bên phải",
-                "description": "Tư thế nghiêng về bên phải, tạo áp lực không đều lên cột sống",
-                "recommendation": "Hãy điều chỉnh tư thế để trọng lượng phân bố đều trên cả hai bên hông",
-                "severity_level": 2,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "neck_right",
-                "name": "Tư thế cổ đúng",
-                "description": "Cổ thẳng, đầu ngang tầm màn hình",
-                "recommendation": "Tiếp tục giữ tư thế cổ như vậy, rất tốt!",
-                "severity_level": 0,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "neck_wrong",
-                "name": "Tư thế cổ sai",
-                "description": "Cổ và đầu nghiêng về phía trước hoặc các bên, gây căng cơ cổ",
-                "recommendation": "Nâng màn hình lên ngang tầm mắt, giữ cổ thẳng và thả lỏng vai",
-                "severity_level": 4,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "leg_right",
-                "name": "Tư thế chân đúng",
-                "description": "Chân đặt trên sàn hoặc giá đỡ, tạo góc 90 độ tại đầu gối",
-                "recommendation": "Tiếp tục giữ tư thế chân như vậy, rất tốt!",
-                "severity_level": 0,
-                "created_at": datetime.now()
-            },
-            {
-                "label_id": "leg_wrong",
-                "name": "Tư thế chân sai",
-                "description": "Chân không đặt đúng vị trí, gây áp lực lên đầu gối và hông",
-                "recommendation": "Điều chỉnh độ cao ghế để chân tiếp xúc với sàn hoặc sử dụng giá đỡ chân",
-                "severity_level": 2,
-                "created_at": datetime.now()
-            }
+            "label_id": "straight_back",
+            "name": "Lưng thẳng",
+            "description": "Tư thế ngồi thẳng lưng, đầu thẳng",
+            "recommendation": "Giữ tư thế này, rất tốt!",
+            "severity_level": 0,
+            "created_at": datetime.now()
+        },
+        {
+            "label_id": "hunched_back",
+            "name": "Gù lưng",
+            "description": "Tư thế gù lưng, cổ gập xuống",
+            "recommendation": "Hãy ngồi thẳng lưng, nâng đầu lên",
+            "severity_level": 4,
+            "created_at": datetime.now()
+        },
+         {
+            "label_id": "leaning_forward",
+            "name": "Nghiêng về phía trước",
+            "description": "Tư thế nghiêng về phía trước, tạo áp lực lên cột sống",
+            "recommendation": "Hãy điều chỉnh tư thế để lưng thẳng",
+            "severity_level": 2,
+            "created_at": datetime.now()
+            
+        },
+         {
+            "label_id": "leaning_backward",
+            "name": "Nghiêng về phía sau",
+            "description": "Tư thế nghiêng về phía sau, không hỗ trợ đúng cách cho cột sống",
+            "recommendation": "Hãy điều chỉnh tư thế để lưng tiếp xúc với tựa lưng của ghế",
+            "severity_level": 2,
+            "created_at": datetime.now()
+            
+        },
+         {
+            "label_id": "slouching",
+            "name": "Lưng bị cong",
+            "description": "Tư thế lưng bị cong, không hỗ trợ đúng cách cho cột sống",
+            "recommendation": "Hãy điều chỉnh tư thế để lưng thẳng",
+            "severity_level": 3,
+            "created_at": datetime.now()
+            
+        },
+         {
+            "label_id": "crossed_legs",
+            "name": "Bắt chéo chân",
+            "description": "Tư thế bắt chéo chân, tạo áp lực không đều lên cột sống",
+           
+            "severity_level": 4,
+            "created_at": datetime.now()
+        },
+         {
+            "label_id": "vai_nho",
+            "name": "Vai bị lệch",
+            "description": "Tư thế vai bị lệch, tạo áp lực không đều lên cột sống",
+            "recommendation": "Hãy điều chỉnh tư thế để vai thẳng",
+            "severity_level": 3,
+           
+            "created_at": datetime.now()
+        },
+         {
+            "label_id": "vai_thang",
+            "name": "Vai thẳng",
+            "description": "Tư thế vai thẳng, tạo áp lực đều lên cột sống",
+            "recommendation": "Giữ tư thế này, rất tốt!",
+            "severity_level": 0,
+           
+            "created_at": datetime.now()
+        },
+         {
+            "label_id": "nghieng_sang_trai",
+            "name": "Nghiêng người sang trái",
+            "description": "Tư thế nghiêng người sang trái, tạo áp lực không đều lên cột sống",
+            "recommendation": "Hãy điều chỉnh tư thế để trọng lượng phân bố đều trên cả hai bên hông",
+            "severity_level": 2,
+            "created_at": datetime.now()
+           
+        },
+         {
+            "label_id": "nghieng_sang_phai",
+            "name": "Nghiêng người sang phải",
+            "description": "Tư thế nghiêng người sang phải, tạo áp lực không đều lên cột sống",
+            "recommendation": "Hãy điều chỉnh tư thế để trọng lượng phân bố đều trên cả hai bên hông",
+            "severity_level": 2,
+           
+            "created_at": datetime.now()
+        }
         ]
         
         # Chỉ thêm nhãn nếu chưa tồn tại
