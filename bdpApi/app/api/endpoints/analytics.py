@@ -318,6 +318,7 @@ async def get_posture_improvement(
         session_ids.append(session["_id"])
         session_dates[str(session["_id"])] = session["creation_date"]
     
+    # Trả về kết quả trống nếu không có phiên nào
     if not session_ids:
         return {
             "improvement_data": [],
@@ -336,12 +337,24 @@ async def get_posture_improvement(
         else:
             bad_posture_ids.append(label["label_id"])
     
+    # Trả về kết quả trống nếu không có phân loại nhãn
+    if not good_posture_ids or not bad_posture_ids:
+        return {
+            "improvement_data": [],
+            "overall_improvement": 0,
+            "good_posture_trend": [],
+            "bad_posture_trend": []
+        }
+    
     # Tính toán thống kê cho mỗi phiên
     improvement_data = []
     good_posture_percentages = []
     bad_posture_percentages = []
     
+    # Phân tích dữ liệu phiên dựa trên session_items
     for session_id in session_ids:
+        session_date = session_dates[str(session_id)]
+        
         # Đếm số lượng tư thế tốt/xấu trong phiên
         good_count = await session_items_collection.count_documents({
             "session_id": session_id,
@@ -358,24 +371,28 @@ async def get_posture_improvement(
         if total_count > 0:
             good_percentage = (good_count / total_count) * 100
             bad_percentage = (bad_count / total_count) * 100
-        else:
-            good_percentage = 0
-            bad_percentage = 0
-        
-        session_date = session_dates[str(session_id)]
-        
-        improvement_data.append({
-            "session_id": str(session_id),
-            "date": session_date,
-            "good_posture_count": good_count,
-            "bad_posture_count": bad_count,
-            "total_count": total_count,
-            "good_percentage": good_percentage,
-            "bad_percentage": bad_percentage
-        })
-        
-        good_posture_percentages.append(good_percentage)
-        bad_posture_percentages.append(bad_percentage)
+            
+            improvement_data.append({
+                "session_id": str(session_id),
+                "date": session_date,
+                "good_posture_count": good_count,
+                "bad_posture_count": bad_count,
+                "total_count": total_count,
+                "good_percentage": good_percentage,
+                "bad_percentage": bad_percentage
+            })
+            
+            good_posture_percentages.append(good_percentage)
+            bad_posture_percentages.append(bad_percentage)
+    
+    # Trả về kết quả trống nếu không có dữ liệu tư thế
+    if not improvement_data:
+        return {
+            "improvement_data": [],
+            "overall_improvement": 0,
+            "good_posture_trend": [],
+            "bad_posture_trend": []
+        }
     
     # Tính toán sự cải thiện tổng thể
     overall_improvement = 0
@@ -406,6 +423,8 @@ async def get_posture_improvement(
         "good_posture_trend": good_posture_trend,
         "bad_posture_trend": bad_posture_trend
     }
+
+
 
 @router.get("/daily-summary", response_model=DailyPostureSummaryResponse)
 async def get_daily_posture_summary(
