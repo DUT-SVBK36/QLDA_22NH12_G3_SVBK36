@@ -11,7 +11,6 @@ import { AuthService } from "@/services/auth";
 import { usePopupStore } from "@/services/popup";
 import SharedAssets from "@/shared/SharedAssets";
 import { Container, Fonts } from "@/shared/SharedStyles";
-import { playPostureWarning, preloadPostureSounds } from "@/utils/play-audio";
 import { PostureMappedString } from "@/utils/postures-map";
 import { useEffect, useState } from "react";
 import { ImageBackground, ScrollView, StyleSheet, Text, View} from "react-native";
@@ -86,8 +85,7 @@ export default function DetectScreen() {
        */
 
       if(data.is_new_posture) {
-        if (data.posture.posture !== "good_sitting_side")
-
+        if (data.posture.posture !== "straight_back" || data.posture.posture !== "vai_thang")
         setWrongPostures(prev => [...prev, {
           id: new Date().toISOString(),
           image: data.image,
