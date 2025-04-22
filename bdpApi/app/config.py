@@ -24,18 +24,7 @@ os.makedirs(AUDIO_ALERTS_DIR, exist_ok=True)
 
 # Tên tư thế bằng tiếng Việt
 POSTURE_NAMES_VI = {
-    # Simplified posture classes
-    "posture": "Tư thế tốt",
-    "bad_sitting_forward": "Ngồi sai - nghiêng trước",
-    "bad_sitting_backward": "Ngồi sai - nghiêng sau",
-    "lean_left": "Nghiêng sang trái",
-    "lean_right": "Nghiêng sang phải",
-    "neck_right": "Cổ đúng tư thế",
-    "neck_wrong": "Cổ sai tư thế",
-    "leg_right": "Chân đúng tư thế",
-    "leg_wrong": "Chân sai tư thế, bắt chéo",
     
-    # Keep some backward compatibility with original classes
     "straight_back": "Lưng thẳng",
     "hunched_back": "Gù lưng quá sau, cổ gập xuống",
     "leaning_forward": "Nghiêng trước",
@@ -47,10 +36,7 @@ POSTURE_NAMES_VI = {
     "nghieng_sang_trai": "Nghiêng người sang trái",
     "nghieng_sang_phai": "Nghiêng người sang phải",
     
-    # Hierarchical model classes with backward compatibility
-    "good_posture": "Tư thế tốt",
-    "bad_posture_forward_head": "Cúi đầu về phía trước",
-    "bad_posture_slouching": "Lưng bị cong, gù"
+    
 }
 
 # Cấu hình camera

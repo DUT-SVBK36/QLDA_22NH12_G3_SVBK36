@@ -1,26 +1,26 @@
 KET QUA DANH GIA CAC MO HINH:
 
 Random Forest:
-  - Accuracy: 0.9995
-  - F1 Score: 0.9995
+  - Accuracy: 0.9996
+  - F1 Score: 0.9996
 
 Gradient Boosting:
   - Accuracy: 0.9990
   - F1 Score: 0.9990
 
 SVM:
-  - Accuracy: 0.9996
-  - F1 Score: 0.9996
+  - Accuracy: 0.9998
+  - F1 Score: 0.9998
 
 Neural Network:
-  - Accuracy: 0.9995
-  - F1 Score: 0.9995
+  - Accuracy: 0.9997
+  - F1 Score: 0.9997
 
 Ensemble:
   - Accuracy: 0.9998
   - F1 Score: 0.9998
 
 Meta-Classifier:
-  - Accuracy: 0.9994
-  - F1 Score: 0.9994
+  - Accuracy: 1.0000
+  - F1 Score: 1.0000
 
