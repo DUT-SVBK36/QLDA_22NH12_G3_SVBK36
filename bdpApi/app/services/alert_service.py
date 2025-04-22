@@ -48,7 +48,7 @@ class AlertService:
             logger.error(f"Lỗi khi phát âm thanh: {e}")
             self.is_playing = False
             # Thử phát âm thanh cục bộ nếu gửi lệnh đến ESP32 thất bại
-            self._play_local_sound(f"track_{track_id}")
+            self._play_local_sound(f"{sound_name}")
     def _reset_playing_state(self):
         """Reset trạng thái phát âm thanh"""
         self.is_playing = False
@@ -72,13 +72,16 @@ class AlertService:
         # Map tên tư thế sang ID track tương ứng
         track_mapping = {
             
-            "bad_sitting_forward": 6,
-            "bad_sitting_backward": 8,
-            "too_lean_left_side": 3,
-            "too_lean_right_side": 4,
-            "neck_wrong": 7,
+            "hunched_back": 1,
+            "leaning_forward": 2,
+            "leaning_backward": 3,
+            "slouching": 4,
+            "crossed_legs": 5,
             
-            "leg_wrong": 5
+            "vai_nho": 6,
+            
+            "nghieng_sang_trai": 7,
+            "nghieng_sang_phai": 8,
         }
         
         # Ánh xạ tên tư thế sang track ID
