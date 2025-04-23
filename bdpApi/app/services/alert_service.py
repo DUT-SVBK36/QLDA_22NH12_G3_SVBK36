@@ -72,16 +72,16 @@ class AlertService:
         # Map tên tư thế sang ID track tương ứng
         track_mapping = {
             
-            "hunched_back": 1,
-            "leaning_forward": 2,
-            "leaning_backward": 3,
-            "slouching": 4,
+            "hunched_back": 7,
+            "leaning_forward": 6,
+            "leaning_backward": 8,
+            "slouching": 1,
             "crossed_legs": 5,
             
-            "vai_nho": 6,
+            "vai_nho": 2,
             
-            "nghieng_sang_trai": 7,
-            "nghieng_sang_phai": 8,
+            "nghieng_sang_trai": 3,
+            "nghieng_sang_phai": 4,
         }
         
         # Ánh xạ tên tư thế sang track ID
