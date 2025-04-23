@@ -10,7 +10,7 @@ from typing import Dict, Tuple, Any, List, Optional
 import mediapipe as mp
 from datetime import datetime
 from app.core.utils import extract_features_from_landmarks
-from app.config import MODELS_DIR, logger
+from app.config import MODELS_DIR, logger, ESP32_AUDIO_SERVER
 from app.models.schemas import FrameData, PostureInfo
 
 class ModelService:
@@ -209,7 +209,7 @@ class PostureDetectionService:
             # Xử lý camera dựa trên loại camera
             if self.camera_id == 1 and not self.camera_url:
                 # Camera WiFi mặc định nếu không cung cấp URL
-                self.camera_url = 'http://192.168.8.3:81/stream'
+                self.camera_url = 'http://192.168.248.93:81/stream'
                 logger.info(f"Using WiFi camera at URL: {self.camera_url}")
                 self.cap = cv2.VideoCapture(self.camera_url)
             elif self.camera_id == 1 and self.camera_url:

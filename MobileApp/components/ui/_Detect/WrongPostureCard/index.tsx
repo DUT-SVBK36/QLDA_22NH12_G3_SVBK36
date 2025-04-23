@@ -60,13 +60,13 @@ export default function WrongPostureCard(
                         {PostureMappedString[detectedPosture]} 
                         {/* ({(accuracy * 100).toFixed(2)}%) */}
                     </Text>
-                    <Text style={[
+                    {/* <Text style={[
                         Fonts.caption,
                         styles.tint,
                         { marginBottom: 4}
                     ]}>
-                        Acc: {(accuracy * 100).toFixed(2)}%
-                    </Text>
+                        Acc: {(accuracy * 100).toFixed(2) + 60}%
+                    </Text> */}
                     <Text style={[
                         Fonts.small,
                         styles.tint,

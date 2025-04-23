@@ -103,13 +103,14 @@ export default function HomeScreen() {
                 gap: 8,
               }
             ]}
+            onPress={() => router.push('/(main)/menu/history')}
           >
-            <Ionicons name="trophy" size={48} color={BaseColors.dark_pri} />
+            <Ionicons name="time-outline" size={48} color={BaseColors.dark_pri} />
             <Text style={[
             Fonts.bodySmall,
             styles.tint
             ]}>
-            Leaderboard
+            History
           </Text>
           </TouchableOpacity>
           <View style={[
