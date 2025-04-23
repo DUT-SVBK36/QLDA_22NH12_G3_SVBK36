@@ -85,14 +85,19 @@ export default function DetectScreen() {
        */
 
       if(data.is_new_posture) {
-        if (data.posture.posture !== "straight_back" || data.posture.posture !== "vai_thang")
-        setWrongPostures(prev => [...prev, {
-          id: new Date().toISOString(),
-          image: data.image,
-          posture: data.posture.posture,
-          accuracy: data.posture.confidence,
-          timestamp: data.timestamp
-        }]);
+        // Only add to wrongPostures if the detected posture is not "good_posture"
+        if (data.posture.posture != "straight_back") {
+          setWrongPostures(prev => [
+            ...prev,
+            {
+              id: new Date().toISOString(),
+              image: data.image,
+              posture: data.posture.posture,
+              accuracy: data.posture.confidence,
+              timestamp: data.timestamp
+            }
+          ]);
+        }
         console.log('New posture detected:', data.posture.posture);
         // Play sound based on the detected posture
         
@@ -139,7 +144,7 @@ export default function DetectScreen() {
       const message = {
         action: "start",
         camera_id: "1",
-        camera_url: config.CAMERA_URL,
+        cameraUrl: config.CAMERA_URL
       }
       emit(message);
       console.log('Started detection');
@@ -203,9 +208,9 @@ export default function DetectScreen() {
                 <Text style={styles.statusText}>
                   Current posture: { PostureMappedString[livePostureData.posture.posture] } 
                 </Text>
-                <Text style={styles.statusText}>
-                  Accuracy: {(livePostureData.posture.confidence * 100).toFixed(2)}%
-                </Text>
+                {/* <Text style={styles.statusText}>
+                  Accuracy: {(livePostureData.posture.confidence * 100).toFixed(2) + 50}%
+                </Text> */}
               </>
             )}
           </CustomWindow>
@@ -233,7 +238,7 @@ export default function DetectScreen() {
           ) : (
             wrongPostures.map((posture, index) => (
               <WrongPostureCard
-                key={posture.id || index}
+                key={posture.id + Math.random() || index}
                 image={posture.image}
                 detectedPosture={posture.posture}
                 accuracy={posture.accuracy}

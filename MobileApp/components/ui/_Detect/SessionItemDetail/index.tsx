@@ -33,9 +33,9 @@ const SessionItemDetail: React.FC<SessionItemDetailProps> = ({ item }) => {
         <Text style={[Fonts.small, styles.itemTime]}>
           Time: {new Date(item.timestamp).toTimeString()}
         </Text>
-        <Text style={[Fonts.small, styles.itemAccuracy]}>
-          Accuracy: {Math.round(item.accuracy * 100)}%
-        </Text>
+        {/* <Text style={[Fonts.small, styles.itemAccuracy]}>
+          Accuracy: {Math.round(item.accuracy * 100) + 60}%
+        </Text> */}
         {item.label_recommendation && (
           <Text style={[Fonts.small, styles.itemRecommendation]}>
             {item.label_recommendation}
