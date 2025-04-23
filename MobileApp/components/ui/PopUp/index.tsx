@@ -56,9 +56,9 @@ const PopUp: React.FC<PopUpProps> = ({
                 <Text style={[Fonts.bodySmall, styles.infoText]}>
                   Time: {typeof timestamp == "number" ? formatTimespan(timestamp) : new Date(timestamp).toLocaleString("vi-VN", { hour12: false })}
                 </Text>
-                <Text style={[Fonts.bodySmall, styles.infoText]}>
-                  Accuracy: {Math.round(accuracy * 100)}%
-                </Text>
+                {/* <Text style={[Fonts.bodySmall, styles.infoText]}>
+                  Accuracy: {Math.round(accuracy * 100) + 50}%
+                </Text> */}
                 {recommendation && (
                   <Text style={[Fonts.bodySmall, styles.recommendation]}>
                     {recommendation}
