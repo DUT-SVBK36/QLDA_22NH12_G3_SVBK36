@@ -159,7 +159,7 @@ class CameraState:
                             try:
                                 # Kiểm tra thời gian từ cảnh báo cuối cùng
                                 current_time = time.time()
-                                if not hasattr(self, 'last_alert_time') or current_time - self.last_alert_time > 20.0:  
+                                if not hasattr(self, 'last_alert_time') or current_time - self.last_alert_time > 5:  
                                     # Gửi tên tư thế trực tiếp đến hàm play_alert_sound
                                     self.alert_service.play_alert_sound(smoothed_class)
                                     
