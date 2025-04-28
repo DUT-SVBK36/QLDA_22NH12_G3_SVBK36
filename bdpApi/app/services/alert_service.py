@@ -22,7 +22,7 @@ class AlertService:
         try:
             # Kiểm tra nếu đang phát âm thanh và chưa đủ thời gian
             current_time = datetime.now()
-            if self.is_playing and self.last_play_time and (current_time - self.last_play_time).total_seconds() < 20:
+            if self.is_playing and self.last_play_time and (current_time - self.last_play_time).total_seconds() < 5:
                 logger.info(f"Đang phát âm thanh, bỏ qua yêu cầu mới: {sound_name}")
                 return
 
@@ -41,7 +41,7 @@ class AlertService:
             
             # Đặt hẹn giờ để đánh dấu kết thúc phát âm thanh sau 15 giây
             import threading
-            threading.Timer(15.0, self._reset_playing_state).start()
+            threading.Timer(5, self._reset_playing_state).start()
             
             logger.info(f"Đã gửi lệnh phát âm thanh: {sound_name} (Track {track_id})")
         except Exception as e:
@@ -72,16 +72,16 @@ class AlertService:
         # Map tên tư thế sang ID track tương ứng
         track_mapping = {
             
-            "hunched_back": 1,
-            "leaning_forward": 2,
-            "leaning_backward": 3,
-            "slouching": 4,
+            "hunched_back": 7,
+            "leaning_forward": 6,
+            "leaning_backward": 8 ,
+            "slouching": 1,
             "crossed_legs": 5,
             
-            "vai_nho": 6,
+            "vai_nho": 2,
             
-            "nghieng_sang_trai": 7,
-            "nghieng_sang_phai": 8,
+            "nghieng_sang_trai": 3,
+            "nghieng_sang_phai": 4,
         }
         
         # Ánh xạ tên tư thế sang track ID
