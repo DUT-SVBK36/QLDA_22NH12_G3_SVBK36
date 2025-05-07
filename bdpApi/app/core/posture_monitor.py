@@ -8,7 +8,7 @@ class PostureMonitor:
         self.bad_posture_threshold = bad_posture_threshold
         self.alert_active = False
         self.last_alert_time = None
-        self.alert_cooldown = 20  # Thời gian chờ giữa các cảnh báo (giây)
+        self.alert_cooldown = 5  # Thời gian chờ giữa các cảnh báo (giây)
         self.posture_history = []
         self.max_history = 100  # Số lượng mẫu tối đa trong lịch sử
     
