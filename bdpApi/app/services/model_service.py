@@ -198,7 +198,12 @@ class PostureDetectionService:
         
         # Start the capture thread
         self.start()
-        
+    
+    def is_camera_opened(self):
+        """Kiểm tra xem camera có mở được không"""
+        if self.cap is not None:
+            return self.cap.isOpened()
+        return False
     
     def start(self):
         """Start the detection service"""

@@ -11,6 +11,10 @@ from bson import ObjectId
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
 from app.models.schemas import WebSocketMessage, WebSocketCommand
 from app.services.model_service import PostureDetectionService
 from app.models.database_models import (
@@ -39,6 +43,8 @@ class WebSocketManager:
         self.active_connections[client_id] = websocket
         logger.info(f"WebSocket client connected: {client_id}")
     
+        
+    
     def disconnect(self, client_id: str):
         """Ngắt kết nối client"""
         if client_id in self.active_connections:
@@ -66,7 +72,6 @@ class WebSocketManager:
             await self.send_message(client_id, message)
     
     async def start_detection(self, client_id: str, camera_id: int, user_id: str, camera_url: Optional[str] = None):
-        """Bắt đầu phát hiện tư thế"""
         try:
             # Tạo phiên mới trong MongoDB
             if user_id:
@@ -85,40 +90,59 @@ class WebSocketManager:
                 })
                 return
             
-            # Khởi tạo dịch vụ phát hiện tư thế - hỗ trợ camera WiFi
-            if camera_id == 1:
+            # Khởi tạo dịch vụ phát hiện tư thế
+            if camera_id == 1 and camera_url:
                 logger.info(f"Initializing WiFi camera with URL: {camera_url}")
                 service = PostureDetectionService(camera_id=camera_id, camera_url=camera_url)
             else:
                 service = PostureDetectionService(camera_id=camera_id)
             
+            # Kiểm tra xem camera có mở được không
+            if not service.is_camera_opened():
+                await self.send_message(client_id, {
+                    "type": "error",
+                    "message": "Không thể mở camera"
+                })
+                return
+            
+            # Lưu service vào manager
             self.detection_services[client_id] = service
             
             # Khởi tạo tracking variables
             self.last_posture_check[client_id] = datetime.now()
             self.last_posture_label[client_id] = None
             
-            # Tạo task bất đồng bộ
-            self.detection_tasks[client_id] = asyncio.create_task(
-                self._detection_loop(client_id, service)
-            )
+            # Tạo cửa sổ hiển thị cho backend
+            cv2.namedWindow(f'Camera Stream - {client_id}', cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(f'Camera Stream - {client_id}', 800, 600)
             
-            camera_info = f"local camera {camera_id}" if camera_id != 1 else f"WiFi camera at {camera_url}"
+            # Thông báo cho client rằng camera đã được khởi động
             await self.send_message(client_id, {
                 "type": "status",
-                "message": f"Detection started with {camera_info}"
+                "message": "Camera đã được khởi động thành công"
             })
             
-            logger.info(f"Started posture detection for client {client_id}, camera {camera_id}")
+            # Khởi tạo task để chạy vòng lặp phát hiện tư thế
+            detection_task = asyncio.create_task(self._detection_loop(client_id, service))
+            self.detection_tasks[client_id] = detection_task
+            
+            logger.info(f"Started posture detection for client {client_id}")
+        
         except Exception as e:
             await self.send_message(client_id, {
                 "type": "error",
-                "message": f"Error starting detection: {str(e)}"
+                "message": f"Lỗi khi khởi động camera: {str(e)}"
             })
-            logger.error(f"Error starting detection for client {client_id}: {str(e)}")
+            logger.error(f"Lỗi khi khởi động camera: {str(e)}")
     
     async def stop_detection(self, client_id: str):
         """Dừng phát hiện tư thế"""
+        # Đóng cửa sổ hiển thị
+        try:
+            cv2.destroyWindow(f'Camera Stream - {client_id}')
+        except Exception as e:
+            logger.error(f"Error closing window: {str(e)}")
+        
         if client_id in self.detection_tasks:
             self.detection_tasks[client_id].cancel()
             del self.detection_tasks[client_id]
@@ -133,6 +157,7 @@ class WebSocketManager:
         })
         
         logger.info(f"Stopped posture detection for client {client_id}")
+
     
     async def _detection_loop(self, client_id: str, service: PostureDetectionService):
         """Vòng lặp phát hiện tư thế"""
@@ -152,6 +177,31 @@ class WebSocketManager:
                 frame_data = await service.get_next_frame()
                 
                 if frame_data:
+                    # Hiển thị video trên backend
+                    try:
+                        # Chuyển đổi ảnh base64 thành frame để hiển thị
+                        image_data = base64.b64decode(frame_data.image.split(',')[1] if ',' in frame_data.image else frame_data.image)
+                        nparr = np.frombuffer(image_data, np.uint8)
+                        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        
+                        # Hiển thị thông tin tư thế trên frame
+                        posture_text = f"Posture: {frame_data.posture.posture}"
+                        confidence_text = f"Confidence: {frame_data.posture.confidence:.2f}"
+                        
+                        cv2.putText(frame, posture_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                        cv2.putText(frame, confidence_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                        
+                        # Hiển thị frame
+                        cv2.imshow(f'Camera Stream - {client_id}', frame)
+                        
+                        # Thoát nếu nhấn phím 'q'
+                        key = cv2.waitKey(1) & 0xFF
+                        if key == ord('q'):
+                            break
+                    except Exception as e:
+                        logger.error(f"Error displaying preview: {str(e)}")
+                    
+                    # Phần code xử lý tiếp theo giữ nguyên
                     current_time = datetime.now()
                     current_posture_id = frame_data.posture.posture
                     
@@ -164,7 +214,7 @@ class WebSocketManager:
                     image_path = None
                     
                     # Kiểm tra nếu thời gian trôi qua đủ 2 giây kể từ lần kiểm tra cuối
-                    if time_since_last_check >= 2.0:
+                    if time_since_last_check >= 5:
                         # Cập nhật thời gian kiểm tra cuối
                         last_detection_time = current_time
                         
@@ -201,6 +251,9 @@ class WebSocketManager:
                     else:
                         # Nếu không có ảnh mới, bỏ trường image để giảm dữ liệu gửi
                         frame_data_dict.pop("image", None)
+                    
+                    # Phần code xử lý tư thế và gửi thông tin về client giữ nguyên
+                    # ...
                     
                     # Lưu tư thế vào MongoDB nếu là tư thế mới
                     if session_items_collection is not None and labels_collection is not None:
@@ -282,12 +335,14 @@ class WebSocketManager:
                             
                             if previous_session_item_id:
                                 frame_data_dict["session_item_id"] = str(previous_session_item_id)
-                    if frame_data.posture.need_alert :
+                    
+                    # Xử lý cảnh báo nếu cần
+                    if frame_data.posture.need_alert:
                         try:
                             # Tránh phát âm thanh quá thường xuyên
                             current_time = datetime.now()
                             last_alert_time = getattr(self, 'last_alert_time', None)
-                            alert_cooldown = 20.0 
+                            alert_cooldown = 5 
                             
                             if last_alert_time is None or (current_time - last_alert_time).total_seconds() > alert_cooldown:
                                 logger.info(f"Phát hiện need_alert=true, đang phát âm thanh cho tư thế: {current_posture_id}")
@@ -303,6 +358,7 @@ class WebSocketManager:
                                 self.last_alert_time = current_time
                         except Exception as e:
                             logger.error(f"Lỗi khi phát âm thanh cảnh báo từ WebSocket: {str(e)}")
+                    
                     # Gửi kết quả cho client - chỉ nếu là tư thế mới hoặc interval
                     if is_new_posture or should_save_image:
                         await self.send_message(client_id, {
@@ -311,7 +367,7 @@ class WebSocketManager:
                         })
                     else:
                         # Gửi thông tin nhẹ hơn (không có ảnh) cho client mỗi 0.5s
-                        if time_since_last_check % 0.5 < 0.1:
+                        if time_since_last_check % 5 < 0.1:
                             light_data = {
                                 "posture": frame_data.posture.dict(),
                                 "timestamp": frame_data.timestamp,
@@ -326,6 +382,9 @@ class WebSocketManager:
                 await asyncio.sleep(0.1)
         
         except asyncio.CancelledError:
+            # Đóng cửa sổ hiển thị khi task bị hủy
+            cv2.destroyWindow(f'Camera Stream - {client_id}')
+            
             # Cập nhật thời gian kết thúc của session item cuối cùng
             if session_items_collection is not None and previous_session_item_id is not None:
                 try:
@@ -361,11 +420,15 @@ class WebSocketManager:
             logger.info(f"Detection loop cancelled for client {client_id}")
         
         except Exception as e:
+            # Đóng cửa sổ hiển thị khi có lỗi
+            cv2.destroyWindow(f'Camera Stream - {client_id}')
+            
             await self.send_message(client_id, {
                 "type": "error",
                 "message": f"Detection error: {str(e)}"
             })
             logger.error(f"Error in detection loop for client {client_id}: {str(e)}")
+
 
 # Khởi tạo WebSocket manager
 ws_manager = WebSocketManager()
