@@ -73,9 +73,6 @@ export default function RecentSession() {
                             <Text style={[Fonts.body, { color: "black" }]}>
                                 Recent: {formatSessionDate(session.creation_date)}
                             </Text>
-                            <Text style={[Fonts.caption, { color: "black", marginTop: 4 }]}>
-                                {session.items?.length || 0} posture{session.items?.length !== 1 ? 's' : ''} recorded
-                            </Text>
                         </View>
                     </>
                 ) : (

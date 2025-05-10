@@ -189,7 +189,7 @@ class WebSocketManager:
                         confidence_text = f"Confidence: {frame_data.posture.confidence:.2f}"
                         
                         cv2.putText(frame, posture_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                        cv2.putText(frame, confidence_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                        # cv2.putText(frame, confidence_text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                         
                         # Hiển thị frame
                         cv2.imshow(f'Camera Stream - {client_id}', frame)
