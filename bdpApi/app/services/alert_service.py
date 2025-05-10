@@ -79,10 +79,7 @@ class AlertService:
             "crossed_legs": 5,
             
             "vai_nho": 2,
-            "vai_nho": 2,
             
-            "nghieng_sang_trai": 3,
-            "nghieng_sang_phai": 4,
             "nghieng_sang_trai": 3,
             "nghieng_sang_phai": 4,
         }

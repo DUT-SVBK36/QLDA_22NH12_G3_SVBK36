@@ -227,7 +227,7 @@ export default function DetectScreen() {
         
 
         <CustomWindow
-          title="Wrong Postures"
+          title="Detected Postures"
           maxHeight={400} // Set a reasonable max height
           contentContainerStyle={{
             flexDirection: "column-reverse", // This will correctly apply the column-reverse
