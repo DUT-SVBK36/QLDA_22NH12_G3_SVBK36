@@ -104,7 +104,7 @@ API phát hiện tư thế ngồi và cung cấp phản hồi thời gian thực
    {
      "action": "start",
      "camera_id": 1,
-     "camera_url": "http://192.168.1.10:8080/video"
+     "camera_url": "http://192.168.1.9:81/stream"
    }
    ```
 

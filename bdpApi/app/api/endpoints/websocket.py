@@ -346,13 +346,21 @@ class WebSocketManager:
                             
                             if last_alert_time is None or (current_time - last_alert_time).total_seconds() > alert_cooldown:
                                 logger.info(f"Phát hiện need_alert=true, đang phát âm thanh cho tư thế: {current_posture_id}")
-                                
+                                await self.send_message(client_id, {
+                                    "type": "alert",
+                                    "data": {
+                                        "posture_id": current_posture_id,
+                                        "need_alert": True,
+                                        "message": f"Phát hiện tư thế không đúng: {current_posture_id}"
+                                    }
+                                })
                                 # Import và khởi tạo AlertService
                                 from app.services.alert_service import AlertService
                                 alert_service = AlertService()
                                 
                                 # Phát âm thanh
                                 alert_service.play_alert_sound(current_posture_id)
+                                
                                 
                                 # Cập nhật thời gian cảnh báo cuối cùng
                                 self.last_alert_time = current_time
