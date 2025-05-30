@@ -141,15 +141,6 @@ export default function Me() {
               />
             )}
 
-            {analytics.history && (
-              <PostureHistoryChart 
-                data={analytics.history}
-                titleStyle={Fonts.h3}
-                labelStyle={Fonts.caption}
-                valueStyle={Fonts.body}
-              />
-            )}
-
             {!analytics.distribution &&
               !analytics.duration &&
               !analytics.history &&

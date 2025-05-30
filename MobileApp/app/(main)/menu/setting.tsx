@@ -16,12 +16,10 @@ export default function SettingsScreen() {
         <KeyboardAwareSafeScreen style={[
             Container.base,
             { backgroundColor: Colors[check].background },
-            { paddingTop: 0 },
-            
+            { 
+                paddingTop: 0,
+            },
             ]}>
-            <Text style={[styles.sectionTitle,{ color: Colors[check].text }, Fonts.h2]}>Appearance</Text>
-            <SettingAppearance />
-            
             <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: Colors[check].text }, Fonts.h2]}>
                     Detection

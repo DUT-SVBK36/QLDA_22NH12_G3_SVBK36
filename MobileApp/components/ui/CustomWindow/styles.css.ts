@@ -7,20 +7,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     // Add flex properties to ensure proper containment
     flexDirection: "column",
+    borderRadius: 5,
+    overflow: "hidden",
   },
   titleBar: {
     paddingVertical: 8,
-    backgroundColor: "#FFC0CB",
+    backgroundColor: BaseColors.dark_pri,
     borderTopLeftRadius: 5,
     borderTopRightRadius: 5,
   },
   title: {
-    color: "black",
+    color: "white",
     fontSize: 16,
     textAlign: "center",
   },
   content: {
-    backgroundColor: BaseColors.white,
+    backgroundColor: BaseColors.dark_blue,
     // Allow for flexible height
     flexGrow: 1,
     // Ensure scroll container can grow but also respects maxHeight
