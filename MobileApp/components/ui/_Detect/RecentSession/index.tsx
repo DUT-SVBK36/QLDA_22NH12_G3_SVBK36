@@ -61,24 +61,24 @@ export default function RecentSession() {
                     <ActivityIndicator size="large" color="black" />
                 ) : error ? (
                     <View style={styles.errorContainer}>
-                        <Ionicons name="alert-circle-outline" size={48} color="black" />
-                        <Text style={[Fonts.body, { color: "black" }]}>
+                        <Ionicons name="alert-circle-outline" size={48} color="white" />
+                        <Text style={[Fonts.body, { color: "white" }]}>
                             {error}
                         </Text>
                     </View>
                 ) : session ? (
                     <>
-                        <Ionicons name="timer-outline" size={48} color="black" />
+                        <Ionicons name="timer-outline" size={48} color="white" />
                         <View style={styles.textContent}>
-                            <Text style={[Fonts.body, { color: "black" }]}>
+                            <Text style={[Fonts.bodySmall, { color: "white" }]}>
                                 Recent: {formatSessionDate(session.creation_date)}
                             </Text>
                         </View>
                     </>
                 ) : (
                     <View style={styles.noSessionContainer}>
-                        <Ionicons name="timer-outline" size={48} color="black" />
-                        <Text style={[Fonts.body, { color: "black" }]}>
+                        <Ionicons name="timer-outline" size={48} color="white" />
+                        <Text style={[Fonts.body, { color: "white" }]}>
                             No recent sessions found
                         </Text>
                     </View>

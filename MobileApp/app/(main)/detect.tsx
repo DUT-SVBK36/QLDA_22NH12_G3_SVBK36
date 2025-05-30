@@ -6,7 +6,9 @@ import PopUp from "@/components/ui/PopUp";
 import { BaseColors } from "@/constants/Colors";
 import config from "@/constants/config";
 import { useSocket } from "@/contexts/DetectContext";
+import useToast from "@/hooks/useToast";
 import { PostureUpdate } from "@/models/posture.model";
+import { audioService } from "@/services/audio";
 import { AuthService } from "@/services/auth";
 import { usePopupStore } from "@/services/popup";
 import SharedAssets from "@/shared/SharedAssets";
@@ -29,7 +31,7 @@ export default function DetectScreen() {
   const [livePostureData, setLivePostureData] = useState<PostureUpdate | null>(null);
   const { socket, isConnected, connect, disconnect, emit } = useSocket();
   const { isVisible, currentItem, showPopup, hidePopup } = usePopupStore();
-  
+  const toast = useToast();
 
   useEffect(() => {
     if(!socket) return;
@@ -86,7 +88,8 @@ export default function DetectScreen() {
 
       if(data.is_new_posture) {
         // Only add to wrongPostures if the detected posture is not "good_posture"
-        if (data.posture.posture != "straight_back") {
+        if (data.posture.posture != "straight_back"
+        ) {
           setWrongPostures(prev => [
             ...prev,
             {
@@ -100,7 +103,10 @@ export default function DetectScreen() {
         }
         console.log('New posture detected:', data.posture.posture);
         // Play sound based on the detected posture
+        // audioService.play(data.posture.posture);
+        toast.showInfo(`Phát hiện tư thế: ${PostureMappedString[data.posture.posture] ?? data.posture.posture}`);
         
+
         // playPostureWarning("bad_sitting_backward");
       }
     });
@@ -143,8 +149,7 @@ export default function DetectScreen() {
     if (socket && isConnected) {
       const message = {
         action: "start",
-        camera_id: "1",
-        cameraUrl: config.CAMERA_URL
+        camera_id: "0",
       }
       emit(message);
       console.log('Started detection');
@@ -206,7 +211,7 @@ export default function DetectScreen() {
             {livePostureData && (
               <>
                 <Text style={styles.statusText}>
-                  Current posture: { PostureMappedString[livePostureData.posture.posture] } 
+                  Current posture: { livePostureData.posture.posture } 
                 </Text>
                 {/* <Text style={styles.statusText}>
                   Accuracy: {(livePostureData.posture.confidence * 100).toFixed(2) + 50}%
@@ -234,7 +239,10 @@ export default function DetectScreen() {
           }}
         >
           {wrongPostures.length === 0 ? (
-            <Text style={styles.noPostures}>No wrong postures detected yet</Text>
+            <Text style={[
+              styles.noPostures,
+              Fonts.caption,
+            ]}>No wrong postures detected yet</Text>
           ) : (
             wrongPostures.map((posture, index) => (
               <WrongPostureCard
@@ -273,13 +281,14 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   statusText: {
-    color: "black",
+    color: "white",
     fontFamily: "Lexend",
+    textAlign: "center",
     marginLeft: 8,
     marginTop: 12,
   },
   noPostures: {
-    color: BaseColors.black,
+    color: BaseColors.white,
     textAlign: "center",
     padding: 16
   }

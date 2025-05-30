@@ -35,13 +35,15 @@ const PostureDistChart: React.FC<PostureDistChartProps> = ({
     .map(([key, item]) => {
       // Generate a color based on the posture type
       const colorMap: Record<string, string> = {
-        good_sitting_side: '#4CAF50',
-        too_lean_right_side: '#F44336',
-        too_lean_left_side: '#FF9800',
-        bad_sitting_backward_side: '#9C27B0',
-        bad_sitting_forward_side: '#2196F3',
-        neck_wrong_position: '#FFEB3B',
-        leg_wrong_position: '#795548',
+        hunched_back: '#4CAF50',
+        leaning_forward: '#F44336',
+        leaning_backward: '#FF9800',
+        slouching: '#9C27B0',
+        crossed_legs: '#2196F3',
+        vai_nho: '#FFEB3B',
+        nghieng_sang_trai: '#795548',
+        nghien_sang_phai: '#607D8B',
+        unknown: '#9E9E9E',
       };
 
       return {

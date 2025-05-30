@@ -52,6 +52,7 @@ export default function MenuLayout() {
                 name="session"
                 options={{
                     headerShown: false,
+                    presentation: 'modal',
                 }}
             />
             
