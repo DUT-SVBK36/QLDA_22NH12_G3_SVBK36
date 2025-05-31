@@ -58,6 +58,7 @@ export default function TabLayout() {
         <Tabs.Screen
         name="notifications"
         options={{
+          href: null,
           tabBarIcon: ({ color }) => <Ionicons size={iconSize} name="notifications" color={color} />,
         }}
         />

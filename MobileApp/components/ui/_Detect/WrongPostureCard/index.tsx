@@ -1,9 +1,11 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import styles from "./styles.css";
 import { Fonts } from "@/shared/SharedStyles";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import config from "@/constants/config";
 import { useState } from "react";
+import { usePopupStore } from "@/services/popup";
+import { PostureMappedString } from "@/utils/postures-map";
 
 interface WrongPostureCardProps {
     id?: string;
@@ -13,6 +15,7 @@ interface WrongPostureCardProps {
     accuracy?: number;
     desc?: string;
     timestamp?: string;
+    event? : () => void;
 }
 
 export default function WrongPostureCard(
@@ -26,28 +29,26 @@ export default function WrongPostureCard(
         timestamp = new Date().toLocaleString("vi-VN", { hour12: false })
     }: WrongPostureCardProps
 ) {
+    const { showPopup } = usePopupStore();
     const [isExpanded, setIsExpanded] = useState(false);
     return (
         <>
             <TouchableOpacity style={[
                 styles.container
             ]}
-            onPress={() => {
-                setIsExpanded(!isExpanded);
-            }}
+            onPress={() => showPopup({
+                image: image,
+                label_name: detectedPosture,
+                accuracy: accuracy,
+                timestamp: timestamp,
+                label_recommendation: desc
+              })}
+              activeOpacity={0.7}
             >
-                <Image
-                    source={{
-                        uri: `${image}`
-                    }}
-                    style={[
-                        styles.img,
-                        isExpanded && {
-                            flex: 1,
-                            height: "100%",
-                            objectFit: "cover",
-                        }
-                    ]}
+                <Ionicons 
+                    name="image"
+                    size={24}
+                    color={"white"}
                 />
                 <View style={[
                     styles.content
@@ -56,16 +57,16 @@ export default function WrongPostureCard(
                         Fonts.caption,
                         styles.titleTint
                     ]}>
-                        {detectedPosture} 
+                        {PostureMappedString[detectedPosture]} 
                         {/* ({(accuracy * 100).toFixed(2)}%) */}
                     </Text>
-                    <Text style={[
+                    {/* <Text style={[
                         Fonts.caption,
                         styles.tint,
                         { marginBottom: 4}
                     ]}>
-                        Acc: {(accuracy * 100).toFixed(2)}%
-                    </Text>
+                        Acc: {(accuracy * 100).toFixed(2) + 60}%
+                    </Text> */}
                     <Text style={[
                         Fonts.small,
                         styles.tint,

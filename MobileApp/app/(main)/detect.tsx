@@ -2,13 +2,18 @@ import RecentSession from "@/components/ui/_Detect/RecentSession";
 import WrongPostureCard from "@/components/ui/_Detect/WrongPostureCard";
 import CustomButton from "@/components/ui/CustomButton";
 import CustomWindow from "@/components/ui/CustomWindow";
+import PopUp from "@/components/ui/PopUp";
 import { BaseColors } from "@/constants/Colors";
+import config from "@/constants/config";
 import { useSocket } from "@/contexts/DetectContext";
+import useToast from "@/hooks/useToast";
 import { PostureUpdate } from "@/models/posture.model";
+import { audioService } from "@/services/audio";
 import { AuthService } from "@/services/auth";
+import { usePopupStore } from "@/services/popup";
 import SharedAssets from "@/shared/SharedAssets";
 import { Container, Fonts } from "@/shared/SharedStyles";
-import { playPostureWarning, preloadPostureSounds } from "@/utils/play-audio";
+import { PostureMappedString } from "@/utils/postures-map";
 import { useEffect, useState } from "react";
 import { ImageBackground, ScrollView, StyleSheet, Text, View} from "react-native";
 
@@ -25,13 +30,14 @@ export default function DetectScreen() {
   const [wrongPostures, setWrongPostures] = useState<PostureData[]>([]);
   const [livePostureData, setLivePostureData] = useState<PostureUpdate | null>(null);
   const { socket, isConnected, connect, disconnect, emit } = useSocket();
-  
+  const { isVisible, currentItem, showPopup, hidePopup } = usePopupStore();
+  const toast = useToast();
 
   useEffect(() => {
     if(!socket) return;
     const prepareApp = async () => {
       // Preload sounds alongside other app initialization
-      await preloadPostureSounds();
+      // await preloadPostureSounds();
       // Other initialization...
     };
     const client_id = AuthService.getUser() || '';
@@ -60,6 +66,7 @@ export default function DetectScreen() {
        */
 
       setLivePostureData(data);
+      
     });
     socket.on('detection_result', (data: any) => {
       console.log('res:', data);
@@ -78,20 +85,29 @@ export default function DetectScreen() {
         }
        * 
        */
-      
-      if(data.is_new_posture && data.posture.confidence > 0.9) {
-        setInterval(() => setWrongPostures(prev => [...prev, {
-          id: new Date().toISOString(),
-          image: data.image,
-          posture: data.posture.posture,
-          accuracy: data.posture.confidence,
-          timestamp: data.timestamp
-        }]), 2000);
 
+      if(data.is_new_posture) {
+        // Only add to wrongPostures if the detected posture is not "good_posture"
+        if (data.posture.posture != "straight_back"
+        ) {
+          setWrongPostures(prev => [
+            ...prev,
+            {
+              id: new Date().toISOString(),
+              image: data.image,
+              posture: data.posture.posture,
+              accuracy: data.posture.confidence,
+              timestamp: data.timestamp
+            }
+          ]);
+        }
         console.log('New posture detected:', data.posture.posture);
         // Play sound based on the detected posture
-        if (data.posture.posture === "good_posture") return;
-        playPostureWarning("bad_sitting_backward");
+        // audioService.play(data.posture.posture);
+        toast.showInfo(`Phát hiện tư thế: ${PostureMappedString[data.posture.posture] ?? data.posture.posture}`);
+        
+
+        // playPostureWarning("bad_sitting_backward");
       }
     });
     socket.on('session_item_completed', (data: any) => {
@@ -165,7 +181,11 @@ export default function DetectScreen() {
         }}
       />
       <ScrollView style={[
-          Container.base
+          Container.base,
+          {
+            paddingBottom: 54,
+            // backgroundColor: BaseColors.white,
+          }
       ]}
         contentContainerStyle={[
           Container.baseContent,
@@ -191,11 +211,11 @@ export default function DetectScreen() {
             {livePostureData && (
               <>
                 <Text style={styles.statusText}>
-                  Current posture: {livePostureData.posture.posture} 
+                  Current posture: { livePostureData.posture.posture } 
                 </Text>
-                <Text style={styles.statusText}>
-                  Accuracy: {(livePostureData.posture.confidence * 100).toFixed(2)}%
-                </Text>
+                {/* <Text style={styles.statusText}>
+                  Accuracy: {(livePostureData.posture.confidence * 100).toFixed(2) + 50}%
+                </Text> */}
               </>
             )}
           </CustomWindow>
@@ -212,18 +232,21 @@ export default function DetectScreen() {
         
 
         <CustomWindow
-          title="Wrong Postures"
+          title="Detected Postures"
           maxHeight={400} // Set a reasonable max height
           contentContainerStyle={{
             flexDirection: "column-reverse", // This will correctly apply the column-reverse
           }}
         >
           {wrongPostures.length === 0 ? (
-            <Text style={styles.noPostures}>No wrong postures detected yet</Text>
+            <Text style={[
+              styles.noPostures,
+              Fonts.caption,
+            ]}>No wrong postures detected yet</Text>
           ) : (
             wrongPostures.map((posture, index) => (
               <WrongPostureCard
-                key={posture.id || index}
+                key={posture.id + Math.random() || index}
                 image={posture.image}
                 detectedPosture={posture.posture}
                 accuracy={posture.accuracy}
@@ -234,6 +257,18 @@ export default function DetectScreen() {
         </CustomWindow>
         
       </ScrollView>
+      
+      {currentItem && (
+        <PopUp
+          visible={isVisible}
+          onClose={hidePopup}
+          image={currentItem.image}
+          label={currentItem.label_name || ''}
+          accuracy={currentItem.accuracy || 0}
+          timestamp={currentItem.timestamp as number || 0}
+          recommendation={currentItem.label_recommendation}
+        />
+      )}
     </>
   )
 }
@@ -248,11 +283,12 @@ const styles = StyleSheet.create({
   statusText: {
     color: "white",
     fontFamily: "Lexend",
+    textAlign: "center",
     marginLeft: 8,
     marginTop: 12,
   },
   noPostures: {
-    color: BaseColors.secondary,
+    color: BaseColors.white,
     textAlign: "center",
     padding: 16
   }

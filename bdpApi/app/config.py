@@ -24,18 +24,7 @@ os.makedirs(AUDIO_ALERTS_DIR, exist_ok=True)
 
 # Tên tư thế bằng tiếng Việt
 POSTURE_NAMES_VI = {
-    # Simplified posture classes
-    "posture": "Tư thế tốt",
-    "bad_sitting_forward": "Ngồi sai - nghiêng trước",
-    "bad_sitting_backward": "Ngồi sai - nghiêng sau",
-    "lean_left": "Nghiêng sang trái",
-    "lean_right": "Nghiêng sang phải",
-    "neck_right": "Cổ đúng tư thế",
-    "neck_wrong": "Cổ sai tư thế",
-    "leg_right": "Chân đúng tư thế",
-    "leg_wrong": "Chân sai tư thế, bắt chéo",
     
-    # Keep some backward compatibility with original classes
     "straight_back": "Lưng thẳng",
     "hunched_back": "Gù lưng quá sau, cổ gập xuống",
     "leaning_forward": "Nghiêng trước",
@@ -47,10 +36,7 @@ POSTURE_NAMES_VI = {
     "nghieng_sang_trai": "Nghiêng người sang trái",
     "nghieng_sang_phai": "Nghiêng người sang phải",
     
-    # Hierarchical model classes with backward compatibility
-    "good_posture": "Tư thế tốt",
-    "bad_posture_forward_head": "Cúi đầu về phía trước",
-    "bad_posture_slouching": "Lưng bị cong, gù"
+    
 }
 
 # Cấu hình camera
@@ -59,6 +45,7 @@ IMAGE_SEND_INTERVAL = 2.0    # 2 giây gửi một ảnh
 
 # Cấu hình cảnh báo
 BAD_POSTURE_THRESHOLD = 5    # Thời gian ngưỡng tính bằng giây
-ALERT_COOLDOWN = 10          # Thời gian chờ giữa các cảnh báo (giây)
+ALERT_COOLDOWN = 5          # Thời gian chờ giữa các cảnh báo (giây)
 # Cấu hình ESP32 Audio Server
-ESP32_AUDIO_SERVER = "http://192.168.43.182"
+ESP32_AUDIO_SERVER = "http://192.168.111.180"
+ESP32_CAM_SERVER = "http://192.168.111.93:81/stream"

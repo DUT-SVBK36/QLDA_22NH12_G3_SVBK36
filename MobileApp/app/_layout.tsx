@@ -5,7 +5,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-
+import Toast from 'react-native-toast-message';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SocketProvider } from '@/contexts/DetectContext';
@@ -48,6 +48,7 @@ export default function RootLayout() {
           <Stack.Screen name="+not-found" />
           <Stack.Screen name="(main)" options={{ headerShown: false }} />
           <Stack.Screen name='test' options={{ headerShown: false }} />
+          
         </Stack>
     )
   });
@@ -58,6 +59,7 @@ export default function RootLayout() {
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
               <Routes />
               <StatusBar style="auto" />
+              <Toast />
             </ThemeProvider>
         </SafeAreaProvider>
       </SocketProvider>

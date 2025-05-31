@@ -24,7 +24,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         return;
       }
 
-      if (!authStatus && !isAuthPath && pathname !== '/') {
+      if (!authStatus && !isAuthPath) {
         router.replace('/login');
         return;
       }

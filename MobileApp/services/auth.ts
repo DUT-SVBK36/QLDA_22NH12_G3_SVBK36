@@ -132,6 +132,30 @@ export class AuthService {
     }
   }
 
+  static async me(): Promise<any | null> {
+    try {
+      const token = await this.getToken();
+      if (!token) return null;
+
+      const response = await fetch(api.auth.me, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to fetch user data');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return null;
+    }
+  }
+
   static async isAuthenticated(): Promise<boolean> {
     const token = await this.getToken();
     if (!token) return false;
