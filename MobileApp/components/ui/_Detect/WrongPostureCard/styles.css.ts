@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
     color: BaseColors.secondary,
   },
   tint: {
-    color: "gray",
+    color: "white",
   },
   content: {
     display: "flex",

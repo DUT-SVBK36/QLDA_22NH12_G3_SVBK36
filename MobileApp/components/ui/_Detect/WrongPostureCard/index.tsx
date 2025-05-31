@@ -48,7 +48,7 @@ export default function WrongPostureCard(
                 <Ionicons 
                     name="image"
                     size={24}
-                    color={"black"}
+                    color={"white"}
                 />
                 <View style={[
                     styles.content
@@ -74,7 +74,7 @@ export default function WrongPostureCard(
                         <FontAwesome5 
                             name="clock" 
                             size={10} 
-                            color={"black"}
+                            color={"white"}
                         />  {new Date(timestamp).toLocaleString("vi-VN", { hour12: false })}
                     </Text>
                 </View>

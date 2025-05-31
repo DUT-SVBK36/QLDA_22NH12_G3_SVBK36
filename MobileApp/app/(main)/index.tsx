@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AuthService } from "@/services/auth";
 import { useRouter } from "expo-router";
+import IconBtn from "@/components/ui/IconBtn";
 
 export default function HomeScreen() {
   const [username, setUsername] = useState<string>("");
@@ -59,82 +60,30 @@ export default function HomeScreen() {
         >Home
         </Text>
 
-        {/* User Card here */}
-        <UserCard 
-          username={username}
-          onPress={() => router.push('/menu/me')}
-        />
-        
-        {/* Rest of the component remains unchanged */}
-        <View style={[
-          styles.container,
+        <Text style={[
+          Fonts.medium,
+          styles.tint,
           {
-            padding: 16,
+            textAlign: "left",
+            alignSelf: "flex-start",
+            marginBottom: 16,
           }
         ]}>
-          <Text style={[
-            Fonts.h1Large,
-            styles.tint
-          ]}>
-            50%
-          </Text>
-          <Text style={[
-            Fonts.bodySmall,
-            styles.tint
-          ]}>
-            Best right posture accuracy
-          </Text>
-        </View>
-        <View style={
-          {
-            width: "100%",
-            display: "flex",
-            flexDirection: "row",
-            gap: 16,
-          }
-        }>
-          <TouchableOpacity 
-            style={[
-              styles.container,
-              {
-                backgroundColor: BaseColors.white,
-                display: "flex",
-                flex: 1,
-                gap: 8,
-              }
-            ]}
-            onPress={() => router.push('/(main)/menu/history')}
-          >
-            <Ionicons name="time-outline" size={48} color={BaseColors.dark_pri} />
-            <Text style={[
-            Fonts.bodySmall,
-            styles.tint
-            ]}>
-            History
-          </Text>
-          </TouchableOpacity>
-          <View style={[
-          styles.container,
-          {
-            alignItems: "flex-start",
-            justifyContent: "center",
-            flex: 2,
-          }
-          ]}>
-            <Text style={[
-              Fonts.h1Large,
-              styles.tint
-            ]}>
-              256
-            </Text>
-            <Text style={[
-              Fonts.bodySmall,
-              styles.tint
-            ]}>
-              streak days
-            </Text>
-        </View>
-        </View>
+          Welcome back, {username}!
+        </Text>
+        <IconBtn 
+          label="Detect"
+          icon={"camera"}
+          onPress={() => router.push('/detect')}
+        />
+        <IconBtn 
+          label="History"
+          icon={"time"}
+          onPress={() => router.push('/(main)/menu/history')}
+        />
+
+        
+        {/* Rest of the component remains unchanged */}
       </ScrollView>
     </>
   )

@@ -41,13 +41,15 @@ const PostureDurationChart: React.FC<PostureDurationChartProps> = ({
 
   // Define color mapping
   const postureColors: Record<string, string> = {
-    good_sitting_side: '#4CAF50',
-    too_lean_right_side: '#FFEB3B',
-    too_lean_left_side: '#2196F3',
-    bad_sitting_backward_side: '#9C27B0',
-    bad_sitting_forward_side: '#FF9800',
-    neck_wrong_position: '#F44336',
-    leg_wrong_position: '#795548',
+    hunched_back: '#4CAF50',
+        leaning_forward: '#F44336',
+        leaning_backward: '#FF9800',
+        slouching: '#9C27B0',
+        crossed_legs: '#2196F3',
+        vai_nho: '#FFEB3B',
+        nghieng_sang_trai: '#795548',
+        nghien_sang_phai: '#607D8B',
+        unknown: '#9E9E9E',
   };
 
   // Transform duration data to bar chart format
@@ -170,6 +172,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center',
     marginVertical: 16,
+    overflow: 'hidden',
   },
   barLabel: {
     color: BaseColors.dark_pri,

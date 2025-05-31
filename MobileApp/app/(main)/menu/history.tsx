@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, View, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { Text, View, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
 import { SessionService } from "@/services/sessions";
 import { Session } from "@/models/session.model";
 import { ImageBackground } from "react-native";
@@ -14,19 +14,29 @@ import { router } from "expo-router";
 export default function History() {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState<number>(0);
     const [hasMore, setHasMore] = useState<boolean>(true);
     const colorScheme = useColorScheme();
     const check = colorScheme ?? "light";
 
-    const fetchSessions = async () => {
+    const fetchSessions = async (isRefresh: boolean = false) => {
         try {
-            setLoading(true);
-            const response = await SessionService.getAllSessions(page);
+            if (isRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             
-            if (page === 0) {
+            const pageToFetch = isRefresh ? 0 : page;
+            const response = await SessionService.getAllSessions(pageToFetch);
+            
+            if (pageToFetch === 0 || isRefresh) {
                 setSessions(response);
+                if (isRefresh) {
+                    setPage(0);
+                }
             } else {
                 // Filter out any duplicate sessions based on _id
                 const existingIds = new Set(sessions.map(session => session._id));
@@ -52,6 +62,7 @@ export default function History() {
             }
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -67,16 +78,22 @@ export default function History() {
         }
     }, [page]);
 
+    // Handle pull-to-refresh
+    const onRefresh = () => {
+        setHasMore(true); // Reset hasMore state
+        fetchSessions(true);
+    };
+
     // Handle load more
     const handleLoadMore = () => {
-        if (!loading && hasMore) {
+        if (!loading && !refreshing && hasMore) {
             setPage(prevPage => prevPage + 1);
         }
     };
 
     // Render footer with loading indicator
     const renderFooter = () => {
-        if (loading) {
+        if (loading && !refreshing) {
             return (
                 <View style={styles.footer}>
                     <ActivityIndicator size="small" color={Colors[check].tint} />
@@ -93,7 +110,7 @@ export default function History() {
 
     return (
         <>
-        <ImageBackground 
+            <ImageBackground 
                 source={SharedAssets.Bg}
                 resizeMode="cover"
                 style={{
@@ -102,41 +119,49 @@ export default function History() {
                     position: "absolute",
                 }}
             />
-        <View style={[
-            Container.base,
-        ]}>
-            <Text style={[
-                Container.title,
-                Fonts.h2,
-                { color: BaseColors.dark_pri}
+            <View style={[
+                Container.base,
             ]}>
-                Session History
-            </Text>
+                <Text style={[
+                    Container.title,
+                    Fonts.h2,
+                    { color: BaseColors.dark_pri}
+                ]}>
+                    Session History
+                </Text>
 
-            <CustomWindow title="Previous Sessions" scrollable={false}>
-                {error ? (
-                    <Text style={[Fonts.body, styles.errorText]}>{error}</Text>
-                ) : sessions.length === 0 && !loading ? (
-                    <Text style={[Fonts.body, styles.noSessionsText]}>No sessions found</Text>
-                ) : (
-                    //
-                    <FlatList
-                        data={sessions}
-                        renderItem={({ item }) => (
-                            <SessionItem data={item} />
-                        )}
-                        keyExtractor={keyExtractor}
-                        contentContainerStyle={styles.listContainer}
-                        onEndReached={handleLoadMore}
-                        onEndReachedThreshold={0.5}
-                        ListFooterComponent={renderFooter}
-                    />
-                    
-                )}
-            </CustomWindow>
-        </View>
+                <CustomWindow title="Previous Sessions" scrollable={false}>
+                    {error ? (
+                        <Text style={[Fonts.body, styles.errorText]}>{error}</Text>
+                    ) : sessions.length === 0 && !loading && !refreshing ? (
+                        <Text style={[Fonts.body, styles.noSessionsText]}>No sessions found</Text>
+                    ) : (
+                        <FlatList
+                            data={sessions}
+                            renderItem={({ item }) => (
+                                <SessionItem data={item} />
+                            )}
+                            keyExtractor={keyExtractor}
+                            contentContainerStyle={styles.listContainer}
+                            onEndReached={handleLoadMore}
+                            onEndReachedThreshold={0.5}
+                            ListFooterComponent={renderFooter}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={onRefresh}
+                                    colors={[Colors[check].tint]} // Android
+                                    tintColor={Colors[check].tint} // iOS
+                                    title="Pull to refresh..." // iOS
+                                    titleColor={BaseColors.dark_pri} // iOS
+                                />
+                            }
+                            showsVerticalScrollIndicator={true}
+                        />
+                    )}
+                </CustomWindow>
+            </View>
         </>
-        
     );
 }
 
