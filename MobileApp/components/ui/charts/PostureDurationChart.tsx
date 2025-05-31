@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center',
     marginVertical: 16,
+    overflow: 'hidden',
   },
   barLabel: {
     color: BaseColors.dark_pri,
