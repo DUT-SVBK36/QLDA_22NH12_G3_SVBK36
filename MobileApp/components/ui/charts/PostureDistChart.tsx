@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center',
     marginVertical: 16,
+    overflow: 'hidden',
   },
   centerLabel: {
     fontSize: 16,
