@@ -57,12 +57,6 @@ export default function UserMenu() {
         <MenuUser username={username} onPress={
           () => router.push('/menu/me')}
         />
-        <MenuOption icon="globe" label="Language: English" />
-        <MenuOption icon="test" label="Test" 
-          onPress={() => router.push('/test/socket')}
-        />
-        <View style={styles.divider} />
-        <MenuOption icon="check-circle" label="Goals" />
         <MenuOption icon="history" label="History" 
           onPress={() => router.push('/menu/history')}
         />
@@ -76,6 +70,7 @@ export default function UserMenu() {
         <MenuOption icon="log-out" label="Log out" 
           onPress={async () => {
             await logout();
+            router.replace('/login');
             // router.replace('/login');
           }}
         />

@@ -32,9 +32,9 @@ const MenuUser = ({
             />
             <View style={styles.userInfo}>
                 <Text style={[styles.username, textColor, Fonts.subtitle]}>{username}</Text>
-                <View style={styles.badge}>
+                {/* <View style={styles.badge}>
                     <Text style={[styles.badgetext, Fonts.caption]}>Beginner</Text>
-                </View>
+                </View> */}
             </View>
             <View style={styles.rightContainer}>
                 <FontAwesomeIcon 
