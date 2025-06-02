@@ -47,43 +47,118 @@ TaskHandle_t cameraTaskHandle = NULL;
 TaskHandle_t speakerTaskHandle = NULL;
 TaskHandle_t webServerTaskHandle = NULL;
 TaskHandle_t streamingTaskHandle = NULL;  // Thêm task handle cho streaming
+TaskHandle_t watchdogTaskHandle = NULL;   // Thêm watchdog task
 
 // Biến cờ để kiểm soát các client stream
 bool clientsStreaming = false;
 WiFiClient streamingClient;  // Client cho streaming
 bool hasStreamingClient = false;  // Cờ để kiểm tra có client streaming không
 
+// Biến cho streaming monitoring
+volatile unsigned long lastStreamingActivity = 0;
+volatile unsigned long streamingStartTime = 0;
+volatile bool streamingHealthy = true;
+
 // Task xử lý streaming riêng biệt
 void streamingTask(void * parameter) {
+  TickType_t lastFrameTime = 0;
+  const TickType_t frameTimeout = pdMS_TO_TICKS(5000); // 5 giây timeout
+  
   while(true) {
     if (hasStreamingClient && streamingClient.connected()) {
-      if (xSemaphoreTake(cameraMutex, 100 / portTICK_PERIOD_MS) == pdTRUE) {
-        camera_fb_t * fb = esp_camera_fb_get();
-        if (fb) {
-          streamingClient.println();
-          streamingClient.println("--frame");
-          streamingClient.print("Content-Type: image/jpeg\r\n");
-          streamingClient.print("Content-Length: ");
-          streamingClient.print(fb->len);
-          streamingClient.print("\r\n\r\n");
-          
-          streamingClient.write(fb->buf, fb->len);
-          streamingClient.println();
-          
-          esp_camera_fb_return(fb);
-        }
-        xSemaphoreGive(cameraMutex);
-      }
-      vTaskDelay(33 / portTICK_PERIOD_MS); // ~30 FPS
-    } else {
-      // Nếu không có client hoặc client đã ngắt kết nối
-      if (hasStreamingClient) {
+      // Kiểm tra timeout - nếu quá lâu không gửi frame thì reset connection
+      if (xTaskGetTickCount() - lastFrameTime > frameTimeout && lastFrameTime != 0) {
+        Serial.println("Streaming timeout, resetting connection...");
         hasStreamingClient = false;
         clientsStreaming = false;
         streamingClient.stop();
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        continue;
+      }
+      
+      // Thử lấy mutex với timeout ngắn để tránh blocking
+      if (xSemaphoreTake(cameraMutex, 200 / portTICK_PERIOD_MS) == pdTRUE) {
+        camera_fb_t * fb = esp_camera_fb_get();
+        if (fb) {
+          // Kiểm tra kích thước frame hợp lệ
+          if (fb->len > 0 && fb->len < 100000) { // Giới hạn kích thước hợp lý
+            // Kiểm tra client vẫn connected trước khi gửi
+            if (streamingClient.connected()) {
+              size_t bytesWritten = 0;
+              
+              // Gửi boundary và headers
+              bytesWritten += streamingClient.println();
+              bytesWritten += streamingClient.println("--frame");
+              bytesWritten += streamingClient.print("Content-Type: image/jpeg\r\n");
+              bytesWritten += streamingClient.print("Content-Length: ");
+              bytesWritten += streamingClient.print(fb->len);
+              bytesWritten += streamingClient.print("\r\n\r\n");
+              
+              // Gửi dữ liệu hình ảnh trong chunks nhỏ để tránh buffer overflow
+              const size_t chunkSize = 1024;
+              uint8_t* buffer = fb->buf;
+              size_t remaining = fb->len;
+              size_t sent = 0;
+              
+              while (remaining > 0 && streamingClient.connected()) {
+                size_t toSend = (remaining > chunkSize) ? chunkSize : remaining;
+                size_t actualSent = streamingClient.write(buffer + sent, toSend);
+                
+                if (actualSent == 0) {
+                  Serial.println("Failed to send chunk, connection may be lost");
+                  break;
+                }
+                
+                sent += actualSent;
+                remaining -= actualSent;
+                
+                // Nhỏ delay giữa các chunks
+                if (remaining > 0) {
+                  vTaskDelay(1 / portTICK_PERIOD_MS);
+                }
+              }
+              
+              if (remaining == 0) {
+                streamingClient.println();
+                lastFrameTime = xTaskGetTickCount();
+              } else {
+                Serial.println("Failed to send complete frame");
+              }
+            } else {
+              Serial.println("Client disconnected during frame send");
+              hasStreamingClient = false;
+              clientsStreaming = false;
+            }
+          } else {
+            Serial.printf("Invalid frame size: %d bytes\n", fb->len);
+          }
+          
+          esp_camera_fb_return(fb);
+        } else {
+          Serial.println("Failed to capture frame");
+          vTaskDelay(100 / portTICK_PERIOD_MS); // Delay khi lỗi
+        }
+        xSemaphoreGive(cameraMutex);
+      } else {
+        Serial.println("Failed to take camera mutex, skipping frame");
+      }
+      
+      // Điều chỉnh frame rate - 15 FPS thay vì 30 FPS để ổn định hơn
+      vTaskDelay(50 / portTICK_PERIOD_MS); // ~15 FPS
+    } else {
+      // Nếu không có client hoặc client đã ngắt kết nối
+      if (hasStreamingClient) {
+        Serial.println("Client disconnected, cleaning up...");
+        hasStreamingClient = false;
+        clientsStreaming = false;
+        streamingClient.stop();
+        lastFrameTime = 0;
       }
       vTaskDelay(100 / portTICK_PERIOD_MS);
     }
+    
+    // Yield cho các task khác
+    taskYIELD();
   }
 }
 
@@ -191,21 +266,38 @@ void webServerTask(void * parameter) {
 void handleMjpegStream() {
   // Nếu đã có client streaming, từ chối client mới
   if (hasStreamingClient) {
-    serverCamera.send(503, "text/plain", "Streaming busy");
+    serverCamera.send(503, "text/plain", "Streaming busy - only one client allowed");
+    Serial.println("Rejected new client - streaming busy");
     return;
   }
   
   WiFiClient client = serverCamera.client();
   
-  // Gửi header cho MJPEG stream
+  // Kiểm tra client connection
+  if (!client || !client.connected()) {
+    Serial.println("Invalid client connection");
+    serverCamera.send(400, "text/plain", "Invalid connection");
+    return;
+  }
+  
+  Serial.println("New streaming client connected");
+  
+  // Gửi header cho MJPEG stream với timeout
+  client.setTimeout(10000); // 10 giây timeout
   client.println("HTTP/1.1 200 OK");
   client.println("Content-Type: multipart/x-mixed-replace; boundary=frame");
+  client.println("Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
+  client.println("Pragma: no-cache");
+  client.println("Expires: Thu, 01 Dec 1994 16:00:00 GMT");
+  client.println("Connection: close");
   client.println();
   
   // Lưu client và đánh dấu đang streaming
   streamingClient = client;
   hasStreamingClient = true;
   clientsStreaming = true;
+  
+  Serial.println("Streaming started successfully");
   
   // Không cần vòng lặp blocking ở đây nữa
   // Task streamingTask sẽ xử lý việc gửi frame
@@ -335,28 +427,28 @@ void startSpeakerServer() {
     
     html += "<div class='container'>";
     html += "<h1>ESP32-CAM DFPlayer Control</h1>";
-    html += "<a href='http://" + WiFi.localIP().toString() + "'>Start streaming</a>";
+    html += "<a href='http://" + WiFi.localIP().toString() + "'>Xem Camera</a>";
     
     html += "<div class='control-section'>";
-    html += "<h2>Audio Player</h2>";
+    html += "<h2>Phát nhạc</h2>";
     html += "<form action='/play'>";
     html += "Số bài: <input type='number' name='track' min='1' max='100' value='1'>";
-    html += "<input type='submit' value='Play' style='background-color: #4CAF50; color: white;'>";
+    html += "<input type='submit' value='Phát' style='background-color: #4CAF50; color: white;'>";
     html += "</form></div>";
 
     html += "<div class='control-section'>";
-    html += "<h2>Volume</h2>";
+    html += "<h2>Âm lượng</h2>";
     html += "<form action='/volume'>";
     html += "Mức (0-30): <input type='number' name='vol' min='0' max='30' value='20'>";
-    html += "<input type='submit' value='Place' style='background-color: #4CAF50; color: white;'>";
+    html += "<input type='submit' value='Đặt' style='background-color: #4CAF50; color: white;'>";
     html += "</form></div>";
 
     html += "<div class='control-section'>";
-    html += "<h2>Control</h2>";
-    html += "<button onclick='location.href=\"/pause\"'>Pause</button>";
-    html += "<button onclick='location.href=\"/resume\"'>Continue</button>";
-    html += "<button onclick='location.href=\"/next\"'>Next</button>";
-    html += "<button onclick='location.href=\"/prev\"'>Previous</button>";
+    html += "<h2>Điều khiển</h2>";
+    html += "<button onclick='location.href=\"/pause\"'>Tạm dừng</button>";
+    html += "<button onclick='location.href=\"/resume\"'>Tiếp tục</button>";
+    html += "<button onclick='location.href=\"/next\"'>Bài tiếp</button>";
+    html += "<button onclick='location.href=\"/prev\"'>Bài trước</button>";
     html += "</div>";
 
     html += "</div></body></html>";
@@ -485,6 +577,10 @@ void setup() {
   if (s) {
     // Tăng tốc độ khung hình bằng cách giảm độ phân giải
     s->set_framesize(s, FRAMESIZE_VGA);  // 640x480 - cân bằng giữa chất lượng và tốc độ
+    
+    // Sửa camera bị ngược upside down
+    s->set_vflip(s, 1);       // Flip theo chiều dọc (vertical flip) - sửa upside down
+    // s->set_hmirror(s, 1);     // Mirror theo chiều ngang (horizontal mirror) - tùy chọn
     
     // Tối ưu hóa chất lượng hình ảnh
     s->set_quality(s, 10);  // 10-63, thấp hơn = chất lượng cao hơn
