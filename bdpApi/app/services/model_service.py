@@ -10,171 +10,130 @@ from typing import Dict, Tuple, Any, List, Optional
 import mediapipe as mp
 from datetime import datetime
 from app.core.utils import extract_features_from_landmarks
-from app.config import MODELS_DIR, logger, ESP32_AUDIO_SERVER, ESP32_CAM_SERVER
+from app.config import MODELS_DIR, logger
 from app.models.schemas import FrameData, PostureInfo
 
 class ModelService:
     def __init__(self):
         self.models = {}
-        self.posture_classes = []
-        self.leg_classes = []
-        self.neck_classes = []
         self.load_models()
     
-    # bdpApi/app/services/model_service.py
     def load_models(self) -> None:
-        """Load trained posture detection models"""
+        """Load Neural Network model only"""
         try:
-            # Đường dẫn đến các mô hình
-            rf_path = os.path.join(MODELS_DIR, 'random_forest_model.pkl')
-            gb_path = os.path.join(MODELS_DIR, 'gradient_boosting_model.pkl')
-            svm_path = os.path.join(MODELS_DIR, 'svm_model.pkl')
+            # Đường dẫn đến mô hình Neural Network
             nn_path = os.path.join(MODELS_DIR, 'neural_network_model.keras')
             scaler_path = os.path.join(MODELS_DIR, 'scaler.pkl')
             label_encoder_path = os.path.join(MODELS_DIR, 'label_encoder.pkl')
-            ensemble_path = os.path.join(MODELS_DIR, 'ensemble_meta.pkl')
             
-            # Tải các mô hình
-            if os.path.exists(rf_path):
-                with open(rf_path, 'rb') as f:
-                    self.models['rf'] = pickle.load(f)
-                    
-            if os.path.exists(gb_path):
-                with open(gb_path, 'rb') as f:
-                    self.models['gb'] = pickle.load(f)
-                    
-            if os.path.exists(svm_path):
-                with open(svm_path, 'rb') as f:
-                    self.models['svm'] = pickle.load(f)
-                    
+            # Tải Neural Network model
             if os.path.exists(nn_path):
-                self.models['nn'] = tf.keras.models.load_model(nn_path)
+                try:
+                    self.models['nn'] = tf.keras.models.load_model(nn_path)
+                    logger.info("✓ Đã tải Neural Network model")
+                except Exception as e:
+                    logger.error(f"✗ Lỗi khi tải Neural Network model: {e}")
+                    raise
+            else:
+                logger.error(f"✗ Không tìm thấy Neural Network model tại: {nn_path}")
+                raise FileNotFoundError(f"Neural Network model not found at {nn_path}")
                 
-            # Tải scaler và label encoder
+            # Tải scaler
             if os.path.exists(scaler_path):
-                with open(scaler_path, 'rb') as f:
-                    self.models['scaler'] = pickle.load(f)
+                try:
+                    with open(scaler_path, 'rb') as f:
+                        self.models['scaler'] = pickle.load(f)
+                    logger.info("✓ Đã tải Scaler")
+                except Exception as e:
+                    logger.error(f"✗ Lỗi khi tải Scaler: {e}")
+                    raise
+            else:
+                logger.error(f"✗ Không tìm thấy Scaler tại: {scaler_path}")
+                raise FileNotFoundError(f"Scaler not found at {scaler_path}")
                     
+            # Tải label encoder
             if os.path.exists(label_encoder_path):
-                with open(label_encoder_path, 'rb') as f:
-                    self.models['label_encoder'] = pickle.load(f)
+                try:
+                    with open(label_encoder_path, 'rb') as f:
+                        self.models['label_encoder'] = pickle.load(f)
+                    logger.info("✓ Đã tải Label Encoder")
+                except Exception as e:
+                    logger.error(f"✗ Lỗi khi tải Label Encoder: {e}")
+                    raise
+            else:
+                logger.error(f"✗ Không tìm thấy Label Encoder tại: {label_encoder_path}")
+                raise FileNotFoundError(f"Label Encoder not found at {label_encoder_path}")
                     
-            # Tải thông tin ensemble nếu có
-            if os.path.exists(ensemble_path):
-                with open(ensemble_path, 'rb') as f:
-                    self.models['ensemble_meta'] = pickle.load(f)
-                    
-            logger.info(f"Đã tải xong {len(self.models)} mô hình và thành phần")
+            logger.info("✓ Đã tải xong tất cả thành phần của Neural Network model")
             
         except Exception as e:
-            logger.error(f"Lỗi khi tải mô hình: {str(e)}")
+            logger.error(f"Lỗi khi tải mô hình Neural Network: {str(e)}")
+            raise
 
-    
-    def extract_and_preprocess_keypoints(self, results):
-        """Extract and preprocess keypoints for all models as done in detect_posture.py"""
-        # Extract keypoints for leg model (10 keypoints * 3 coordinates = 30 features)
-        leg_keypoints_idx = [23, 24, 25, 26, 27, 28, 29, 30, 31, 32]  # Hip to feet
-        leg_keypoints = []
-        for idx in leg_keypoints_idx:
-            if results.pose_landmarks:
-                point = results.pose_landmarks.landmark[idx]
-                leg_keypoints.extend([point.x, point.y, point.z])
-            else:
-                leg_keypoints.extend([0, 0, 0])
-        
-        # Extract keypoints for neck model (11 keypoints * 3 coordinates = 33 features)
-        neck_keypoints_idx = list(range(0, 11))  # Head and face points (0-10)
-        neck_keypoints = []
-        for idx in neck_keypoints_idx:
-            if results.pose_landmarks:
-                point = results.pose_landmarks.landmark[idx]
-                neck_keypoints.extend([point.x, point.y, point.z])
-            else:
-                neck_keypoints.extend([0, 0, 0])
-        
-        # Extract keypoints for posture model (12 keypoints * 3 coordinates = 36 features)
-        posture_keypoints_idx = list(range(11, 23))  # Shoulders to hips (11-22)
-        posture_keypoints = []
-        for idx in posture_keypoints_idx:
-            if results.pose_landmarks:
-                point = results.pose_landmarks.landmark[idx]
-                posture_keypoints.extend([point.x, point.y, point.z])
-            else:
-                posture_keypoints.extend([0, 0, 0])
-        
-        # Reshape arrays to match model input shapes
-        leg_keypoints = np.array(leg_keypoints).reshape(1, -1)  # Shape: (1, 30)
-        neck_keypoints = np.array(neck_keypoints).reshape(1, -1)  # Shape: (1, 33)
-        posture_keypoints = np.array(posture_keypoints).reshape(1, -1)  # Shape: (1, 36)
-        
-        return leg_keypoints, neck_keypoints, posture_keypoints
-    
     def predict_posture(self, features=None, results=None):
-        """Dự đoán tư thế sử dụng mô hình ensemble"""
+        """Dự đoán tư thế sử dụng Neural Network"""
         try:
             if not self.models:
                 logger.error("Chưa tải mô hình. Không thể dự đoán.")
                 return "unknown", 0.0
             
+            # Kiểm tra các thành phần cần thiết
+            required_components = ['nn', 'scaler', 'label_encoder']
+            for component in required_components:
+                if component not in self.models:
+                    logger.error(f"Thiếu thành phần: {component}")
+                    return "unknown", 0.0
+            
             # Nếu có kết quả MediaPipe, trích xuất đặc trưng
-            if results and hasattr(results, 'pose_landmarks'):
+            if results and hasattr(results, 'pose_landmarks') and results.pose_landmarks:
                 features = extract_features_from_landmarks(results.pose_landmarks.landmark)
             
-            if features and 'scaler' in self.models:
-                features_scaled = self.models['scaler'].transform([features])
-                
-                # Dự đoán với từng mô hình
-                predictions = {}
-                
-                if 'rf' in self.models:
-                    predictions['rf'] = self.models['rf'].predict_proba(features_scaled)
-                
-                if 'gb' in self.models:
-                    predictions['gb'] = self.models['gb'].predict_proba(features_scaled)
-                
-                if 'svm' in self.models:
-                    predictions['svm'] = self.models['svm'].predict_proba(features_scaled)
-                
-                if 'nn' in self.models:
-                    predictions['nn'] = self.models['nn'].predict(features_scaled)
-                
-                # Kết hợp các dự đoán
-                if predictions:
-                    # Tính trung bình có trọng số các dự đoán
-                    ensemble_pred = np.zeros_like(list(predictions.values())[0])
-                    
-                    # Nếu có thông tin về ensemble
-                    if 'ensemble_meta' in self.models:
-                        weights = dict(zip(self.models['ensemble_meta']['models'], 
-                                        self.models['ensemble_meta']['weights']))
-                        
-                        for model_name, pred in predictions.items():
-                            if model_name in weights:
-                                ensemble_pred += pred * weights[model_name]
-                    else:
-                        # Nếu không có thông tin về ensemble, tính trung bình đơn giản
-                        for pred in predictions.values():
-                            ensemble_pred += pred
-                        ensemble_pred /= len(predictions)
-                    
-                    # Lấy lớp có xác suất cao nhất
-                    predicted_class_idx = np.argmax(ensemble_pred)
-                    confidence = ensemble_pred[0][predicted_class_idx]
-                    
-                    # Chuyển đổi chỉ số lớp thành tên lớp
-                    if 'label_encoder' in self.models:
-                        predicted_class = self.models['label_encoder'].inverse_transform([predicted_class_idx])[0]
-                        return predicted_class, float(confidence)
-                    else:
-                        return f"class_{predicted_class_idx}", float(confidence)
+            if features is None:
+                logger.warning("Không có đặc trưng để dự đoán")
+                return "unknown", 0.0
             
-            return "unknown", 0.0
+            # Chuẩn hóa đặc trưng
+            try:
+                features_scaled = self.models['scaler'].transform([features])
+            except Exception as e:
+                logger.error(f"Lỗi khi chuẩn hóa đặc trưng: {e}")
+                return "unknown", 0.0
+            
+            # Dự đoán với Neural Network
+            try:
+                prediction_proba = self.models['nn'].predict(features_scaled, verbose=0)
+                predicted_class_idx = np.argmax(prediction_proba)
+                confidence = prediction_proba[0][predicted_class_idx]
+                
+                # Chuyển đổi chỉ số lớp thành tên lớp
+                predicted_class = self.models['label_encoder'].inverse_transform([predicted_class_idx])[0]
+                
+                return predicted_class, float(confidence)
+                
+            except Exception as e:
+                logger.error(f"Lỗi khi dự đoán với Neural Network: {e}")
+                return "unknown", 0.0
         
         except Exception as e:
             logger.error(f"Lỗi khi dự đoán tư thế: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return "unknown", 0.0
+
+    def get_model_info(self):
+        """Lấy thông tin về mô hình Neural Network"""
+        if 'nn' not in self.models:
+            return None
+        
+        nn_model = self.models['nn']
+        return {
+            'model_type': 'Neural Network',
+            'input_shape': nn_model.input_shape,
+            'output_shape': nn_model.output_shape,
+            'num_layers': len(nn_model.layers),
+            'total_params': nn_model.count_params(),
+            'classes': self.models['label_encoder'].classes_.tolist() if 'label_encoder' in self.models else []
+        }
 
 
 class PostureDetectionService:
@@ -188,6 +147,7 @@ class PostureDetectionService:
         from app.services.alert_service import AlertService
         self.alert_service = AlertService()
         self.last_alert_time = None
+        
         # MediaPipe setup
         self.mp_pose = mp.solutions.pose
         self.mp_drawing = mp.solutions.drawing_utils
@@ -195,6 +155,10 @@ class PostureDetectionService:
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5
         )
+        
+        # Smoothing variables
+        self.recent_predictions = []
+        self.max_predictions = 5  # Số lượng dự đoán gần đây để làm mịn
         
         # Start the capture thread
         self.start()
@@ -208,13 +172,13 @@ class PostureDetectionService:
     def start(self):
         """Start the detection service"""
         if not self.running:
-            logger.info(f"Starting camera capture with camera ID: {self.camera_id}")
+            logger.info(f"Starting Neural Network posture detection with camera ID: {self.camera_id}")
             self.running = True
             
             # Xử lý camera dựa trên loại camera
             if self.camera_id == 1 and not self.camera_url:
                 # Camera WiFi mặc định nếu không cung cấp URL
-                self.camera_url = ESP32_CAM_SERVER
+                self.camera_url = 'http://192.168.8.3:81/stream'
                 logger.info(f"Using WiFi camera at URL: {self.camera_url}")
                 self.cap = cv2.VideoCapture(self.camera_url)
             elif self.camera_id == 1 and self.camera_url:
@@ -235,7 +199,7 @@ class PostureDetectionService:
     def stop(self):
         """Stop the detection service"""
         self.running = False
-        if self.capture_thread and self.capture_thread.is_alive():
+        if hasattr(self, 'capture_thread') and self.capture_thread and self.capture_thread.is_alive():
             self.capture_thread.join(timeout=2.0)
         
         if self.cap:
@@ -249,7 +213,18 @@ class PostureDetectionService:
         except Exception as e:
             logger.error(f"Error closing MediaPipe pose: {str(e)}")
         
-        logger.info("Posture detection service stopped")
+        logger.info("Neural Network posture detection service stopped")
+    
+    def _smooth_prediction(self, posture_class):
+        """Làm mịn dự đoán bằng cách lấy kết quả phổ biến nhất"""
+        self.recent_predictions.append(posture_class)
+        if len(self.recent_predictions) > self.max_predictions:
+            self.recent_predictions.pop(0)
+        
+        # Lấy dự đoán phổ biến nhất
+        from collections import Counter
+        smoothed_class = Counter(self.recent_predictions).most_common(1)[0][0]
+        return smoothed_class
     
     def _capture_loop(self):
         """Background thread loop for capturing and processing frames"""
@@ -262,6 +237,8 @@ class PostureDetectionService:
         frame_count = 0
         reconnect_attempts = 0
         max_reconnect_attempts = 5
+        
+        logger.info("Neural Network frame processing loop started")
         
         while self.running:
             success, frame = self.cap.read()
@@ -311,32 +288,46 @@ class PostureDetectionService:
                         self.mp_pose.POSE_CONNECTIONS
                     )
                 
-                # Get posture prediction
+                # Get posture prediction using Neural Network
                 posture_class, confidence = self.model_service.predict_posture(results=results)
+                
+                # Smooth the prediction
+                if posture_class != "unknown":
+                    smoothed_posture = self._smooth_prediction(posture_class)
+                else:
+                    smoothed_posture = posture_class
+                
+                # Add model info to frame
+               
+                cv2.putText(annotated_frame, f"Posture: {smoothed_posture}", 
+                           (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                cv2.putText(annotated_frame, f"Confidence: {confidence:.3f}", 
+                           (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 
                 # Convert frame to base64 for transmission
                 _, buffer = cv2.imencode('.jpg', annotated_frame)
                 base64_image = f"data:image/jpeg;base64,{base64.b64encode(buffer).decode('utf-8')}"
                 
-                # Determine if this posture needs an alert (anything not 'good_')
+                # Determine if this posture needs an alert
                 is_good_posture = (
-                    posture_class.startswith("straight_") or 
-                    
-                    "vai_thang" in posture_class
+                    smoothed_posture.startswith("straight_") or 
+                    "vai_thang" in smoothed_posture
                 )
-                needs_alert = not is_good_posture
+                needs_alert = not is_good_posture and smoothed_posture != "unknown"
+                
                 if needs_alert:
                     current_time = datetime.now()
                     if self.last_alert_time is None or (current_time - self.last_alert_time).total_seconds() > 20.0:
                         try:
-                            logger.info(f"Phát hiện tư thế cần cảnh báo: {posture_class}, phát âm thanh")
-                            self.alert_service.play_alert_sound(posture_class)
+                            logger.info(f"Neural Network phát hiện tư thế cần cảnh báo: {smoothed_posture}, confidence: {confidence:.3f}")
+                            self.alert_service.play_alert_sound(smoothed_posture)
                             self.last_alert_time = current_time
                         except Exception as e:
                             logger.error(f"Lỗi khi phát âm thanh cảnh báo: {str(e)}")
+                
                 # Prepare the frame data
                 posture_info = PostureInfo(
-                    posture=posture_class,
+                    posture=smoothed_posture,
                     confidence=float(confidence),
                     need_alert=needs_alert
                 )
@@ -360,7 +351,9 @@ class PostureDetectionService:
                         pass
                 
             except Exception as e:
-                logger.error(f"Error processing frame: {str(e)}")
+                logger.error(f"Error processing frame with Neural Network: {str(e)}")
+                import traceback
+                logger.error(traceback.format_exc())
             
             # Sleep a bit to control the frame rate
             import time
@@ -376,8 +369,12 @@ class PostureDetectionService:
             frame_data = await asyncio.wait_for(self.frame_queue.get(), timeout=5.0)
             return frame_data
         except asyncio.TimeoutError:
-            logger.warning("Timeout waiting for next frame")
+            logger.warning("Timeout waiting for next frame from Neural Network")
             return None
         except Exception as e:
-            logger.error(f"Error getting next frame: {str(e)}")
-            return None 
+            logger.error(f"Error getting next frame from Neural Network: {str(e)}")
+            return None
+
+    def get_model_info(self):
+        """Lấy thông tin về mô hình đang sử dụng"""
+        return self.model_service.get_model_info()
