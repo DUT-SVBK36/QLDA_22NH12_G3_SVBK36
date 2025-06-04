@@ -32,6 +32,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const connect = (client_id: string, token: string) => {
     try {
       initSocket(client_id, token);
+      if(socket){
+        socket.emit({ type: 'ping', client_id, token });
+      }
       // Socket connection status is handled by event listeners
     } catch (error) {
       console.error('Failed to connect WebSocket:', error);

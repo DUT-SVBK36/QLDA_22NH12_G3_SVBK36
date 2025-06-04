@@ -24,20 +24,30 @@ import {
 } from "@/components/ui/charts";
 import { BaseColors } from "@/constants/Colors";
 import { Fonts } from "@/shared/SharedStyles";
-
+import DropDownPicker from 'react-native-dropdown-picker';
+import { Summary } from "@/models/charts/summary.model";
+import SummaryCard from "@/components/ui/Analytics/SummaryCard";
 export default function Me() {
   const [userData, setUserData] = useState<any>(null);
   const [analytics, setAnalytics] = useState<{
+    summary: Summary | null;
     distribution: PostureDist | null;
     duration: PostureDuration | null;
-    history: PostureHistory | null;
     improvement: PostureImprovement | null;
   }>({
+    summary:  null,
     distribution: null,
     duration: null,
-    history: null,
     improvement: null,
   });
+  const [filter, setFilter] = useState<string>("1"); // Default filter to "month"
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([
+        {label: 'Today', value: '1'},
+        {label: 'Recent 7 days', value: '7'},
+        {label: 'Recent 30 days', value: '30'},
+    ]);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,22 +63,22 @@ export default function Me() {
       }
 
       // Calculate date range for last 30 days
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 30);
+      let endDate = new Date();
+      let startDate = new Date();
+      startDate.setDate(endDate.getDate() - Number(filter)); // Default to last 30 days
 
       // Fetch analytics data in parallel
-      const [distribution, duration, history, improvement] = await Promise.all([
+      const [summary, distribution, duration, improvement] = await Promise.all([
+        AnalyticsService.getUserSummary(),
         AnalyticsService.getPostureDist(startDate, endDate),
         AnalyticsService.getPostureDuration(startDate, endDate),
-        AnalyticsService.getPostureHistory(30), // Last 30 records
-        AnalyticsService.getPostureImprovement("month"), // Monthly improvement
+        AnalyticsService.getPostureImprovement(filter), // Monthly improvement
       ]);
 
       setAnalytics({
+        summary,
         distribution,
         duration,
-        history,
         improvement,
       });
     } catch (error) {
@@ -78,18 +88,19 @@ export default function Me() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []); // Empty dependency array means this function reference won't change
+  }, [filter]); // Empty dependency array means this function reference won't change
 
   useEffect(() => {
+    console.log("useEffect: Fetching data with filter:", filter);
     fetchData();
     console.log("Fetching data...");
-  }, [fetchData]); // Add fetchData as a dependency
+  }, [fetchData, filter]); // Add fetchData as a dependency
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     console.log("Refreshing...");
     fetchData();
-  }, [fetchData]); // Add fetchData as a dependency
+  }, [fetchData, filter]); // Add fetchData as a dependency
 
   if (loading) {
     return (
@@ -116,8 +127,23 @@ export default function Me() {
             </Text>
           )}
         </View>
+        
+          <SummaryCard 
+            data={analytics.summary}
+          />
 
-        {error ? (
+          <DropDownPicker
+              open={open}
+              value={filter}
+              items={items}
+              setOpen={setOpen}
+              setValue={setFilter}
+              setItems={setItems}
+              placeholder={'Choose a filter'}
+          />
+          
+
+          {error ? (
           <View style={styles.errorContainer}>
             <Text style={[Fonts.body, styles.errorText]}>{error}</Text>
           </View>
@@ -141,9 +167,18 @@ export default function Me() {
               />
             )}
 
+            {analytics.improvement && (
+              <PostureImprovementChart 
+                data={analytics.improvement} 
+                titleStyle={Fonts.h3}
+                labelStyle={Fonts.caption}
+                valueStyle={Fonts.body}
+              />
+            )}
+
+
             {!analytics.distribution &&
               !analytics.duration &&
-              !analytics.history &&
               !analytics.improvement && (
                 <View style={styles.noDataContainer}>
                   <Text style={[Fonts.body, styles.noDataText]}>
@@ -154,6 +189,7 @@ export default function Me() {
               )}
           </>
         )}
+        
       </ScrollView>
     </SafeAreaView>
   );

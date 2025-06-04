@@ -10,4 +10,13 @@ export interface ImprovementItem {
 
 export interface PostureImprovement {
   improvement_data: ImprovementItem[] | null;
+  overall_improvement: number | null;
+  good_posture_trend: {
+    date: string | null;
+    value: number | null;
+  }[];
+  bad_posture_trend: {
+    date: string | null;
+    value: number | null;
+  }[];
 }

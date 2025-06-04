@@ -18,6 +18,7 @@ const api = {
     getPostureHistory: `${config.API_URL}/analytics/history`,
     getPostureImprovement: `${config.API_URL}/analytics/improvement`,
     getPostureDailySum: `${config.API_URL}/analytics/daily-summary`,
+    getUserSummary: `${config.API_URL}/analytics/user-stats`,
   },
 };
 

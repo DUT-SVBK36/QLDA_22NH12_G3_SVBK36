@@ -72,7 +72,7 @@ const PostureDurationChart: React.FC<PostureDurationChartProps> = ({
         topLabelComponent: () => (
           <View style={styles.labelContainer}>
             <Text style={[styles.barLabel, valueStyle]}>
-              {durationMinutes} min
+              {durationMinutes < 1 ? `Less than 1` : durationMinutes} min
             </Text>
             <Text style={[styles.percentageLabel, valueStyle]}>
               {Math.round(percentage)}%
@@ -102,6 +102,7 @@ const PostureDurationChart: React.FC<PostureDurationChartProps> = ({
       </Text>
       <View style={styles.chartContainer}>
         <BarChart
+          horizontal 
           data={barData}
           width={Dimensions.get('window').width - 64}
           height={220}
@@ -114,7 +115,6 @@ const PostureDurationChart: React.FC<PostureDurationChartProps> = ({
           yAxisTextStyle={[styles.axisText, labelStyle]}
           xAxisLabelTextStyle={[styles.axisText, labelStyle]}
           backgroundColor={BaseColors.grey}
-          showLine
           lineConfig={{
             color: BaseColors.dark_pri,
             thickness: 1,
@@ -133,7 +133,7 @@ const PostureDurationChart: React.FC<PostureDurationChartProps> = ({
             <View style={styles.legendTextContainer}>
               <Text style={[styles.legendText, labelStyle]}>{item.label}</Text>
               <Text style={[styles.legendSubtext, labelStyle]}>
-                {item.value} min ({Math.round(item.percentage)}%)
+                {item.value < 1? `Less than 1`: item.value} min ({Math.round(item.percentage)}%)
               </Text>
             </View>
           </View>
@@ -179,10 +179,13 @@ const styles = StyleSheet.create({
     color: BaseColors.dark_pri,
     fontSize: 12,
     marginTop: 4,
+    display: 'none'
+
   },
   axisText: {
     color: BaseColors.dark_pri,
     fontSize: 10,
+    display: 'none'
   },
   axisTitle: {
     textAlign: 'center',

@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
+import { LineChart } from 'react-native-gifted-charts';
 import { PostureImprovement } from '@/models/analytics';
 import { BaseColors } from '@/constants/Colors';
 import { Fonts } from '@/shared/SharedStyles';
-import { AnalyticsService } from '@/services/analytics';
+import { Ionicons } from '@expo/vector-icons';
 
 interface PostureImprovementChartProps {
     data: PostureImprovement;
@@ -14,184 +14,309 @@ interface PostureImprovementChartProps {
     valueStyle?: any;
 }
 
+// Plain color constants
+const COLORS = {
+    primary: '#2196F3',        // Blue
+    primaryLight: '#E3F2FD',   // Light blue
+    red: '#F44336',            // Red  
+    redLight: '#FFEBEE',       // Light red
+    green: '#4CAF50',          // Green
+    orange: '#FF9800',         // Orange
+    grey: '#757575',           // Grey
+    lightGrey: '#E0E0E0',      // Light grey
+    white: '#FFFFFF',          // White
+    dark: '#212121',           // Dark text
+    background: '#F5F5F5',     // Background
+};
+
 const PostureImprovementChart: React.FC<PostureImprovementChartProps> = ({ 
     data, 
-    title = 'Posture Improvement',
+    title = 'Posture Improvement Trends By Time',
     titleStyle = {},
     labelStyle = {},
     valueStyle = {}
 }) => {
-    if (!data || !data.improvement_data || !Array.isArray(data.improvement_data)) {
+    if (!data || !data.good_posture_trend || !data.bad_posture_trend) {
         return (
             <View style={styles.container}>
                 <Text style={[styles.title, titleStyle]}>{title}</Text>
-                <Text style={[styles.noDataText, labelStyle]}>No improvement data available</Text>
+                <Text style={[styles.noDataText, labelStyle]}>No trend data available</Text>
             </View>
         );
     }
 
-    // Sort data by date
-    const sortedData = [...data.improvement_data]
-        .filter(item => item && item.good_percentage !== null && item.date !== null)
+    // Filter and transform good posture trend data
+    const goodTrendData = data.good_posture_trend
+        .filter(item => item && item.value !== null && item.date !== null)
         .sort((a, b) => {
             if (!a.date || !b.date) return 0;
             return new Date(a.date).getTime() - new Date(b.date).getTime();
-        });
+        })
+        .map((item, index) => ({
+            value: item.value || 0,
+            label: formatDateLabel(item.date || ''),
+            dataPointText: `${(item.value || 0).toFixed(1)}%`,
+        }));
 
-    if (sortedData.length < 2) {
+    // Filter and transform bad posture trend data
+    const badTrendData = data.bad_posture_trend
+        .filter(item => item && item.value !== null && item.date !== null)
+        .sort((a, b) => {
+            if (!a.date || !b.date) return 0;
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        })
+        .map((item, index) => ({
+            value: item.value || 0,
+            label: formatDateLabel(item.date || ''),
+            dataPointText: `${(item.value || 0).toFixed(1)}%`,
+        }));
+
+    if (goodTrendData.length === 0 && badTrendData.length === 0) {
         return (
             <View style={styles.container}>
                 <Text style={[styles.title, titleStyle]}>{title}</Text>
-                <Text style={[styles.noDataText, labelStyle]}>Insufficient data for comparison (need at least 2 sessions)</Text>
+                <Text style={[styles.noDataText, labelStyle]}>No valid trend data available</Text>
             </View>
         );
     }
 
-    // Get the most recent two sessions for comparison
-    const previousSession = sortedData[sortedData.length - 2];
-    const currentSession = sortedData[sortedData.length - 1];
+    // Generate summary based on overall improvement
+    const getSummary = (overallImprovement: number | null) => {
+        if (overallImprovement === null) {
+            return {
+                text: "No improvement data",
+                icon: "help-circle-outline" as const,
+                color: COLORS.grey
+            };
+        }
 
-    // Transform improvement data to bar chart format for comparison
-    const barData = [
-        {
-            value: previousSession.good_percentage || 0,
-            label: 'Good',
-            frontColor: BaseColors.grey,
-            topLabelComponent: () => (
-                <Text style={[styles.barLabel, labelStyle, { color: BaseColors.dark_pri }]}>
-                    Previous
-                </Text>
-            ),
-        },
-        {
-            value: currentSession.good_percentage || 0,
-            label: ' ',
-            frontColor: (currentSession.good_percentage || 0) > (previousSession.good_percentage || 0) ? 
-                BaseColors.primary : BaseColors.red,
-            topLabelComponent: () => (
-                <Text style={[styles.barLabel, valueStyle, { 
-                    color: (currentSession.good_percentage || 0) > (previousSession.good_percentage || 0) ? 
-                        BaseColors.primary : BaseColors.red 
-                }]}>
-                    Current {(currentSession.good_percentage || 0) > (previousSession.good_percentage || 0) ? '▲' : '▼'}
-                </Text>
-            ),
-        },
-    ];
+        if (overallImprovement <= 0) {
+            return {
+                text: "Need to improve more",
+                icon: "trending-down-outline" as const,
+                color: COLORS.red
+            };
+        } else if (overallImprovement > 50) {
+            return {
+                text: "You are doing it right!",
+                icon: "trophy-outline" as const,
+                color: COLORS.green
+            };
+        } else {
+            return {
+                text: "Keep it up!",
+                icon: "trending-up-outline" as const,
+                color: COLORS.orange
+            };
+        }
+    };
 
-    // Calculate overall improvement
-    const change = (currentSession.good_percentage || 0) - (previousSession.good_percentage || 0);
-    const overallImproved = change > 0;
+    const summary = getSummary(data.overall_improvement);
+
+    // Calculate chart dimensions
+    const screenWidth = Dimensions.get('window').width;
+    const chartWidth = screenWidth - 64;
+
+    // Calculate spacing based on the longer dataset
+    const maxDataPoints = Math.max(goodTrendData.length, badTrendData.length);
+    const spacing = maxDataPoints > 1 ? chartWidth / (maxDataPoints - 1) : chartWidth;
 
     return (
         <View style={styles.container}>
             <Text style={[styles.title, titleStyle]}>{title}</Text>
-            <Text style={[styles.subtitle, valueStyle, { color: overallImproved ? BaseColors.primary : BaseColors.red }]}>
-                Overall: {overallImproved ? 'Improved' : 'Declined'} by {Math.abs(change).toFixed(1)}%
-            </Text>
+            
+            {/* Summary Section */}
+            <View style={styles.summaryContainer}>
+                <Text style={[styles.summaryText, valueStyle, { color: summary.color }]}>
+                    {summary.text}
+                </Text>
+            </View>
+
+            {/* Chart Container */}
             <View style={styles.chartContainer}>
-                <BarChart
-                    data={barData}
-                    width={Dimensions.get('window').width - 64}
+                <LineChart
+                    data={goodTrendData}
+                    width={chartWidth}
                     height={220}
-                    barWidth={20}
-                    spacing={8}
-                    barBorderRadius={4}
+                    color1={COLORS.primary}
+                    thickness1={3}
+                    thickness2={3}
+                    areaChart
+                    areaChart1
+                    areaChart2
+                    startFillColor1={COLORS.primary}
+                    endFillColor1={COLORS.primaryLight}
+                    startOpacity={0.3}
+                    endOpacity={0.1}
+                    curved
+                    showDataPointOnFocus
+                    showVerticalLines
+                    hideDataPoints1
+                    yAxisColor={COLORS.grey}
+                    xAxisColor={COLORS.grey}
                     yAxisThickness={1}
                     xAxisThickness={1}
                     yAxisTextStyle={[styles.axisText, labelStyle]}
-                    xAxisLabelTextStyle={[styles.axisText, labelStyle]}
+                    xAxisLabelTextStyle={[styles.axisTextX, labelStyle]}
                     yAxisLabelSuffix="%"
                     noOfSections={5}
+                    yAxisOffset={10}
                     maxValue={100}
+                    rulesType="solid"
+                    rulesColor={COLORS.lightGrey}
+                    spacing={spacing}
                 />
             </View>
+
+            {/* Legend */}
             <View style={styles.legendContainer}>
                 <View style={styles.legendItem}>
-                    <View style={[styles.legendColor, { backgroundColor: BaseColors.grey }]} />
-                    <Text style={[styles.legendText, labelStyle]}>Previous Session ({previousSession.date})</Text>
+                    <View style={[styles.legendColor, { backgroundColor: COLORS.primary }]} />
+                    <Text style={[styles.legendText, labelStyle]}>Good Posture Trend</Text>
                 </View>
-                <View style={styles.legendItem}>
-                    <View style={[styles.legendColor, { backgroundColor: BaseColors.primary }]} />
-                    <Text style={[styles.legendText, labelStyle]}>Current Session ({currentSession.date})</Text>
-                </View>
+                {/* <View style={styles.legendItem}>
+                    <View style={[styles.legendColor, { backgroundColor: COLORS.red }]} />
+                    <Text style={[styles.legendText, labelStyle]}>Bad Posture Trend</Text>
+                </View> */}
             </View>
-            <Text style={[styles.timeframeText, labelStyle]}>
-                Comparing good posture percentages between sessions
+
+            {/* Data Range Info */}
+            <Text style={[styles.dataRangeText, labelStyle]}>
+                Showing trends across {maxDataPoints} sessions
             </Text>
         </View>
     );
 };
 
+// Helper function to format date labels from ISO format: 2025-06-04T08:43:50.872000
+const formatDateLabel = (dateString: string): string => {
+    try {
+        // Parse the ISO date string
+        const date = new Date(dateString);
+        
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+            // If invalid, try to extract just the date part
+            const datePart = dateString.split('T')[0];
+            const fallbackDate = new Date(datePart);
+            if (!isNaN(fallbackDate.getTime())) {
+                return fallbackDate.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+            }
+            return dateString.substring(5, 10); // MM-DD fallback
+        }
+        
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    } catch (error) {
+        // Fallback: extract MM-DD from the string
+        try {
+            const datePart = dateString.split('T')[0]; // Get "2025-06-04"
+            const [year, month, day] = datePart.split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        } catch {
+            return dateString.substring(5, 10); // Return MM-DD as last resort
+        }
+    }
+};
+
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
+        backgroundColor: COLORS.white,
+        borderRadius: 12,
         padding: 16,
         marginVertical: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.12,
+        shadowRadius: 6,
+        elevation: 5,
     },
     title: {
         fontSize: 18,
         fontWeight: '600',
-        marginBottom: 8,
+        marginBottom: 12,
         textAlign: 'center',
-        color: BaseColors.dark_pri,
+        color: COLORS.dark,
     },
-    subtitle: {
-        fontSize: 14,
-        textAlign: 'center',
+    summaryContainer: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: COLORS.background,
+        borderRadius: 8,
+        padding: 12,
         marginBottom: 16,
+    },
+    summaryText: {
+        fontSize: 12,
         fontWeight: '600',
+        marginLeft: 8,
+    },
+    improvementValue: {
+        fontSize: 12,
+        color: COLORS.grey,
+        marginLeft: 4,
     },
     chartContainer: {
         alignItems: 'center',
         marginVertical: 16,
-    },
-    barLabel: {
-        fontSize: 10,
-        marginTop: 4,
+        overflow: 'hidden',
     },
     axisText: {
-        color: BaseColors.dark_pri,
-        fontSize: 10,
+        color: COLORS.dark,
+        fontSize: 8,
+        fontWeight: '500',
+        
+    }, 
+    axisTextX: {
+        color: COLORS.dark,
+        fontSize: 8,
+        fontWeight: '500',
+        display: 'none', // Hide X-axis labels
     },
     legendContainer: {
-        flexDirection: 'row',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
         marginTop: 16,
-        flexWrap: 'wrap',
+        gap: 20,
     },
     legendItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginRight: 16,
-        marginBottom: 8,
     },
     legendColor: {
         width: 12,
         height: 12,
         borderRadius: 6,
-        marginRight: 8,
+        marginRight: 6,
     },
     legendText: {
         fontSize: 12,
-        color: BaseColors.dark_pri,
+        color: COLORS.dark,
+        fontWeight: '500',
     },
-    timeframeText: {
-        fontSize: 12,
-        color: BaseColors.grey,
+    dataRangeText: {
+        fontSize: 11,
+        color: COLORS.grey,
         textAlign: 'center',
         marginTop: 8,
+        fontStyle: 'italic',
     },
     noDataText: {
         textAlign: 'center',
-        color: BaseColors.grey,
+        color: COLORS.grey,
         marginVertical: 24,
+        fontSize: 14,
     },
 });
 

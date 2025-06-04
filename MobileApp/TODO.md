@@ -1,7 +1,17 @@
 # TODO - Mobile App
 
-* [ ] Biểu đồ phân bố tư thế: tròn (pie)
-* [ ] Biểu đồ thời lượng tư thế: cột (bar)
-* [ ] Biểu đồ xu hướng tư thế theo thời gian: đường (line)
-* [ ] Biểu đồ phân bố tư thế theo giờ: nhiệt (tempo)
-* [ ] Biểu đồ so sánh hai khoảng thời gian: so sánh
+Dữ liệu phân bổ tư thế (distribution)
+
+- Hình tròn
+- Theo ngày và tuần
+
+Dữ liệu phân bố theo thời lượng (duration)
+
+- Biểu đồ cột ngang
+- Theo ngày và tuần
+
+Dữ liệu cải thiện (improvement)
+
+- Biểu đồ đường 2 đường cho `good_posture_trend` và `bad_posture_trend`
+- Tính trên số session trong số lượng ngày
+- theo ngày (days=1) và theo tuần (days=2)

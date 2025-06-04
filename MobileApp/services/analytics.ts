@@ -7,11 +7,21 @@ import {
   PostureImprovement,
   PostureDailySum,
 } from "@/models/analytics";
+import { Summary } from "@/models/charts/summary.model";
 
 /**
  * Service for fetching and processing analytics data
  */
 export class AnalyticsService {
+  /**
+   * Helper method to format date to YYYY-MM-DD
+   * @param date Date string or Date object
+   * @returns Formatted date string in YYYY-MM-DD format
+   */
+  private static formatDateToYYYYMMDD(date: string | Date): string {
+    return new Date(date).toISOString().split("T")[0];
+  }
+
   /**
    * Get posture distribution data
    * @param startDate Optional start date for filtering
@@ -24,8 +34,8 @@ export class AnalyticsService {
   ): Promise<PostureDist> {
     try {
       const params: Record<string, string> = {};
-      if (startDate) params.start_date = new Date(startDate).toISOString();
-      if (endDate) params.end_date = new Date(endDate).toISOString();
+      if (startDate) params.start_date = this.formatDateToYYYYMMDD(startDate);
+      if (endDate) params.end_date = this.formatDateToYYYYMMDD(endDate);
 
       return await fetchWithAuth<PostureDist>(
         api.analytics.getPostureDist,
@@ -49,8 +59,8 @@ export class AnalyticsService {
   ): Promise<PostureDuration> {
     try {
       const params: Record<string, string> = {};
-      if (startDate) params.start_date = new Date(startDate).toISOString();
-      if (endDate) params.end_date = new Date(endDate).toISOString();
+      if (startDate) params.start_date = this.formatDateToYYYYMMDD(startDate);
+      if (endDate) params.end_date = this.formatDateToYYYYMMDD(endDate);
 
       return await fetchWithAuth<PostureDuration>(
         api.analytics.getPostureDuration,
@@ -93,11 +103,11 @@ export class AnalyticsService {
    * @returns Posture improvement data
    */
   static async getPostureImprovement(
-    timeFrame?: string
+    days?: string
   ): Promise<PostureImprovement> {
     try {
       const params: Record<string, string> = {};
-      if (timeFrame) params.time_frame = timeFrame;
+      if (days) params.days = days;
 
       return await fetchWithAuth<PostureImprovement>(
         api.analytics.getPostureImprovement,
@@ -119,7 +129,7 @@ export class AnalyticsService {
   ): Promise<PostureDailySum> {
     try {
       const params: Record<string, string> = {};
-      if (date) params.date = new Date(date).toISOString().split("T")[0];
+      if (date) params.date = this.formatDateToYYYYMMDD(date);
 
       return await fetchWithAuth<PostureDailySum>(
         api.analytics.getPostureDailySum,
@@ -170,7 +180,14 @@ export class AnalyticsService {
       throw error;
     }
   }
-
+  static async getUserSummary(): Promise<Summary> {
+    try {
+      return await fetchWithAuth<Summary>(api.analytics.getUserSummary);
+    } catch (error) {
+      console.error("Error fetching user summary:", error);
+      throw error;
+    }
+  }
   /**
    * Format duration from seconds to a readable string
    * @param seconds Duration in seconds
