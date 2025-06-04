@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { PostureDuration } from '@/models/analytics';
 import { BaseColors } from '@/constants/Colors';
+import { PostureMappedString } from '@/utils/postures-map';
 
 interface PostureDurationChartProps {
   data: PostureDuration;
@@ -56,7 +57,7 @@ const PostureDurationChart: React.FC<PostureDurationChartProps> = ({
   const barData = Object.entries(data.durations)
     .filter(([_, item]) => item && item.total_duration !== null)
     .map(([key, item]) => {
-      const displayName = postureNames[key] || key;
+      const displayName = PostureMappedString[key] || key;
       const color = postureColors[key] || '#607D8B';
       const durationMinutes = Math.round((item?.total_duration || 0) / 60);
       const percentage = item?.percentage || 0;
@@ -228,7 +229,7 @@ const styles = StyleSheet.create({
   },
   legendSubtext: {
     fontSize: 10,
-    color: BaseColors.grey,
+    color: 'gray',
     marginTop: 2,
   },
 });

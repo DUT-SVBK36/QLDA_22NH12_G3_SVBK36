@@ -104,11 +104,11 @@ class AlertService:
     def send_audio_command_to_esp32(self, track_id: int) -> None:
         """Gửi lệnh phát âm thanh đến ESP32"""
         try:
-            # Kiểm tra kết nối trước
-            if not self.check_esp32_connection():
-                logger.warning("ESP32 không phản hồi, chuyển sang phát âm thanh từ backend")
-                self._play_local_sound(f"track_{track_id}")
-                return
+            # # Kiểm tra kết nối trước
+            # if not self.check_esp32_connection():
+            #     logger.warning("ESP32 không phản hồi, chuyển sang phát âm thanh từ backend")
+            #     self._play_local_sound(f"track_{track_id}")
+            #     return
                 
             url = f"{ESP32_AUDIO_SERVER}/play?track={track_id}"
             

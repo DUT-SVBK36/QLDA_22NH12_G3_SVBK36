@@ -57,7 +57,7 @@ export default function WrongPostureCard(
                         Fonts.caption,
                         styles.titleTint
                     ]}>
-                        {PostureMappedString[detectedPosture]} 
+                        {PostureMappedString[detectedPosture] || detectedPosture} 
                         {/* ({(accuracy * 100).toFixed(2)}%) */}
                     </Text>
                     {/* <Text style={[

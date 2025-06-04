@@ -9,4 +9,5 @@ export const PostureMappedString: { [key: string]: string } = {
   vai_thang: "Vai thẳng",
   nghieng_sang_trai: "Nghiêng người sang trái",
   nghieng_sang_phai: "Nghiêng người sang phải",
+  unknown: "Không xác định",
 };

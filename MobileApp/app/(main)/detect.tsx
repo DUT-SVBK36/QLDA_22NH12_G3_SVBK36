@@ -146,10 +146,19 @@ export default function DetectScreen() {
 
   // Update the event handlers in detect.tsx
   const handleStartDetection = () => {
-    if (socket && isConnected) {
+    if(!socket) {
+      const client_id = AuthService.getUser() || '';
+      const token = AuthService.getToken();
+      Promise.all([client_id, token]).then(res => {
+        const [client_id, token] = res;
+        connect(client_id.id, token as string);
+      })
+    }
+     if (socket && isConnected) {
       const message = {
         action: "start",
-        camera_id: "0",
+        camera_id: "1",
+        camera_url: config.CAMERA_URL
       }
       emit(message);
       console.log('Started detection');
