@@ -16,7 +16,7 @@ import { Container, Fonts } from "@/shared/SharedStyles";
 import { PostureMappedString } from "@/utils/postures-map";
 import { useEffect, useState } from "react";
 import { ImageBackground, ScrollView, StyleSheet, Text, View} from "react-native";
-
+import { AudioSource, useAudioPlayer } from 'expo-audio';
 interface PostureData {
   id: string;
   image: string;
@@ -32,7 +32,7 @@ export default function DetectScreen() {
   const { socket, isConnected, connect, disconnect, emit } = useSocket();
   const { isVisible, currentItem, showPopup, hidePopup } = usePopupStore();
   const toast = useToast();
-
+  const audio = useAudioPlayer();
   useEffect(() => {
     if(!socket) return;
     const prepareApp = async () => {
@@ -104,6 +104,10 @@ export default function DetectScreen() {
         console.log('New posture detected:', data.posture.posture);
         // Play sound based on the detected posture
         // audioService.play(data.posture.posture);
+        const postureKey = data.posture.posture as keyof typeof SharedAssets.audio;
+          console.log('Playing sound for posture:', postureKey);
+          audio.replace(SharedAssets.audio[postureKey]);
+          audio.play();
         toast.showInfo(`Phát hiện tư thế: ${PostureMappedString[data.posture.posture] ?? data.posture.posture}`);
         
 
