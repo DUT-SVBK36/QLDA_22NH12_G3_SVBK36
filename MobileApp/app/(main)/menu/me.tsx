@@ -43,7 +43,7 @@ export default function Me() {
   const [filter, setFilter] = useState<string>("1"); // Default filter to "month"
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([
-        {label: 'Today', value: '1'},
+        {label: 'Recent 24h', value: '1'},
         {label: 'Recent 7 days', value: '7'},
         {label: 'Recent 30 days', value: '30'},
     ]);

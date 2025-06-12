@@ -299,10 +299,10 @@ class PostureDetectionService:
                 
                 # Add model info to frame
                
-                cv2.putText(annotated_frame, f"Posture: {smoothed_posture}", 
-                           (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                cv2.putText(annotated_frame, f"Confidence: {confidence:.3f}", 
-                           (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                # cv2.putText(annotated_frame, f"Posture: {smoothed_posture}", 
+                #            (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                # cv2.putText(annotated_frame, f"Confidence: {confidence:.3f}", 
+                #            (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 
                 # Convert frame to base64 for transmission
                 _, buffer = cv2.imencode('.jpg', annotated_frame)

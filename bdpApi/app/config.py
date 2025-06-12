@@ -47,5 +47,5 @@ IMAGE_SEND_INTERVAL = 2.0    # 2 giây gửi một ảnh
 BAD_POSTURE_THRESHOLD = 5    # Thời gian ngưỡng tính bằng giây
 ALERT_COOLDOWN = 5          # Thời gian chờ giữa các cảnh báo (giây)
 # Cấu hình ESP32 Audio Server
-ESP32_AUDIO_SERVER = "http://192.168.111.93:81"
-ESP32_CAM_SERVER = "http://192.168.111.93/stream"
+ESP32_AUDIO_SERVER = "http://192.168.111.246:81"
+ESP32_CAM_SERVER = "http://192.168.111.246/stream"

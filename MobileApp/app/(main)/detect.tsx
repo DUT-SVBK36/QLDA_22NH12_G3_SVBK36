@@ -106,8 +106,13 @@ export default function DetectScreen() {
         // audioService.play(data.posture.posture);
         const postureKey = data.posture.posture as keyof typeof SharedAssets.audio;
           console.log('Playing sound for posture:', postureKey);
-          audio.replace(SharedAssets.audio[postureKey]);
-          audio.play();
+          if(!SharedAssets.audio[postureKey]) {
+            console.warn(`No audio found for posture: ${postureKey}`);
+          }
+          else {
+            audio.replace(SharedAssets.audio[postureKey]);
+            audio.play();
+          }
         toast.showInfo(`Phát hiện tư thế: ${PostureMappedString[data.posture.posture] ?? data.posture.posture}`);
         
 
@@ -161,8 +166,8 @@ export default function DetectScreen() {
      if (socket && isConnected) {
       const message = {
         action: "start",
-        camera_id: "0",
-        // camera_url: config.CAMERA_URL
+        camera_id: "1",
+        camera_url: config.CAMERA_URL
       }
       emit(message);
       console.log('Started detection');

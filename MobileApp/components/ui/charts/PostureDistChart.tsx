@@ -90,7 +90,7 @@ const PostureDistChart: React.FC<PostureDistChartProps> = ({
           <View key={index} style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: item.color }]} />
             <Text style={[styles.legendText, labelStyle]}>
-              {item.text}: {Math.round((item.value / total) * 100)}%
+              {item.text}: {item.value} ({((item.value / total) * 100).toFixed(1)}%)
             </Text>
           </View>
         ))}

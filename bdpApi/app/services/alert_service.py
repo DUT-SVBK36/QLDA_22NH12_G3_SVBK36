@@ -109,7 +109,9 @@ class AlertService:
             #     logger.warning("ESP32 không phản hồi, chuyển sang phát âm thanh từ backend")
             #     self._play_local_sound(f"track_{track_id}")
             #     return
-                
+            url = f"{ESP32_AUDIO_SERVER}/volume?level=30"
+            response = httpx.get(url, timeout=2.0)
+            
             url = f"{ESP32_AUDIO_SERVER}/play?track={track_id}"
             
             # Sử dụng httpx.get đồng bộ với timeout ngắn
